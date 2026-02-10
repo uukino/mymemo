@@ -3,10 +3,8 @@
   "name": "React URL Memo",
   "version": "1.0.0",
   "description": "現在のURLに紐づくメモを保存します",
-  "permissions": [
-    "storage",
-    "activeTab"
-  ],
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": ["https://mymemo-y2n2.onrender.com/*"],
   "action": {
     "default_popup": "index.html"
   }
