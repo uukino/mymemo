@@ -5,8 +5,7 @@
   "description": "現在のURLに紐づくメモを保存します",
   "permissions": [
     "storage",
-    "activeTab",
-    "tabs"
+    "activeTab"
   ],
   "action": {
     "default_popup": "index.html"

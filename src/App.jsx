@@ -1,10 +1,17 @@
 import { useState, useEffect } from "react";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
+const PUBLIC_USER_ID = import.meta.env.VITE_PUBLIC_USER_ID || "";
 
 function App() {
   const [currentUrl, setCurrentUrl] = useState("");
   const [memos, setMemos] = useState([]); // 全てのメモ
+  const [viewMode, setViewMode] = useState("local");
+  const [remoteMemos, setRemoteMemos] = useState([]);
+  const [remoteLoading, setRemoteLoading] = useState(false);
+  const [remoteError, setRemoteError] = useState("");
+  const [shareMessage, setShareMessage] = useState("");
+  const [shareError, setShareError] = useState("");
   const [inputText, setInputText] = useState("");
   const [editingId, setEditingId] = useState(null); // 編集中のメモID
 
@@ -25,6 +32,11 @@ function App() {
       setCurrentUrl("http://localhost");
     }
   }, []);
+
+  useEffect(() => {
+    if (viewMode !== "remote" || !currentUrl) return;
+    void fetchRemoteMemos();
+  }, [viewMode, currentUrl]);
 
   // 2. ローカルストレージからメモを読み込む関数
   const loadMemos = () => {
@@ -76,20 +88,59 @@ function App() {
   };
 
   const shareMemo = async () => {
-    const text = inputText.trim();
+    const trimmed = inputText.trim();
+    const fallbackMemo = memos.filter((memo) => memo.url === currentUrl).at(-1);
+    const text = trimmed || fallbackMemo?.text || "";
     if (!text) return;
+    setShareMessage("");
+    setShareError("");
     try {
-      await fetch(`${API_BASE}/memos`, {
+      const payload = {
+        url: currentUrl,
+        text,
+      };
+      if (PUBLIC_USER_ID) {
+        payload.user_id = PUBLIC_USER_ID;
+      }
+
+      const response = await fetch(`${API_BASE}/memos`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          url: currentUrl,
-          text,
-          user_id: "local",
-        }),
+        body: JSON.stringify(payload),
       });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || `API error: ${response.status}`);
+      }
+      setShareMessage("共有しました");
     } catch (error) {
       console.warn("DB保存に失敗しました", error);
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "DB保存に失敗しました";
+      setShareError(message);
+    }
+  };
+
+  const fetchRemoteMemos = async () => {
+    if (!currentUrl) return;
+    setRemoteLoading(true);
+    setRemoteError("");
+    try {
+      const response = await fetch(
+        `${API_BASE}/memos?url=${encodeURIComponent(currentUrl)}`,
+      );
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      const data = await response.json();
+      setRemoteMemos(Array.isArray(data) ? data : []);
+    } catch (error) {
+      setRemoteError("取得に失敗しました");
+      setRemoteMemos([]);
+    } finally {
+      setRemoteLoading(false);
     }
   };
 
@@ -108,9 +159,33 @@ function App() {
   // 現在のURLに紐づくメモだけをフィルタリングして表示
   const currentPageMemos = memos.filter((memo) => memo.url === currentUrl);
 
+  const currentList = viewMode === "remote" ? remoteMemos : currentPageMemos;
+
+  const formatTimestamp = (memo) =>
+    memo.updated_at ||
+    memo.updatedAt ||
+    memo.created_at ||
+    memo.createdAt ||
+    "";
+
   return (
     <div style={{ width: "300px", padding: "16px", fontFamily: "sans-serif" }}>
       <h2>📝 URL Memo</h2>
+
+      <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
+        <button
+          onClick={() => setViewMode("local")}
+          style={{ flex: 1, background: viewMode === "local" ? "#ddd" : "" }}
+        >
+          ローカル
+        </button>
+        <button
+          onClick={() => setViewMode("remote")}
+          style={{ flex: 1, background: viewMode === "remote" ? "#ddd" : "" }}
+        >
+          リモート
+        </button>
+      </div>
 
       {/* URL表示エリア */}
       <div
@@ -124,39 +199,64 @@ function App() {
         Current: {currentUrl}
       </div>
 
-      {/* 入力エリア */}
-      <textarea
-        style={{
-          width: "100%",
-          height: "80px",
-          marginBottom: "8px",
-          boxSizing: "border-box",
-        }}
-        value={inputText}
-        onChange={(e) => setInputText(e.target.value)}
-        placeholder="メモを入力..."
-      />
+      {viewMode === "local" && (
+        <>
+          {/* 入力エリア */}
+          <textarea
+            style={{
+              width: "100%",
+              height: "80px",
+              marginBottom: "8px",
+              boxSizing: "border-box",
+            }}
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            placeholder="メモを入力..."
+          />
 
-      <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
-        <button onClick={saveMemo} style={{ flex: 1 }}>
-          {editingId ? "更新する" : "保存する"}
-        </button>
-        <button onClick={shareMemo} style={{ flex: 1 }}>
-          共有
-        </button>
-        {editingId && (
-          <button onClick={handleCancel} style={{ background: "#ccc" }}>
-            キャンセル
+          <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+            <button onClick={saveMemo} style={{ flex: 1 }}>
+              {editingId ? "更新する" : "保存する"}
+            </button>
+            <button onClick={shareMemo} style={{ flex: 1 }}>
+              共有
+            </button>
+            {editingId && (
+              <button onClick={handleCancel} style={{ background: "#ccc" }}>
+                キャンセル
+              </button>
+            )}
+          </div>
+          {shareMessage && (
+            <p style={{ color: "#2b7", fontSize: "12px" }}>{shareMessage}</p>
+          )}
+          {shareError && (
+            <p style={{ color: "#c00", fontSize: "12px" }}>{shareError}</p>
+          )}
+        </>
+      )}
+
+      {viewMode === "remote" && (
+        <div style={{ marginBottom: "16px" }}>
+          <button
+            onClick={fetchRemoteMemos}
+            style={{ width: "100%" }}
+            disabled={remoteLoading}
+          >
+            {remoteLoading ? "読み込み中..." : "リモート更新"}
           </button>
-        )}
-      </div>
+          {remoteError && (
+            <p style={{ color: "#c00", fontSize: "12px" }}>{remoteError}</p>
+          )}
+        </div>
+      )}
 
       <hr />
 
       {/* リスト表示エリア */}
-      <h3>このページのメモ一覧 ({currentPageMemos.length})</h3>
+      <h3>このページのメモ一覧 ({currentList.length})</h3>
       <ul style={{ listStyle: "none", padding: 0 }}>
-        {currentPageMemos.map((memo) => (
+        {currentList.map((memo) => (
           <li
             key={memo.id}
             style={{
@@ -179,20 +279,26 @@ function App() {
               }}
             >
               <span style={{ fontSize: "10px", color: "#888" }}>
-                {memo.updatedAt}
+                {formatTimestamp(memo)}
               </span>
-              <button
-                onClick={() => handleEdit(memo)}
-                style={{ fontSize: "12px", padding: "2px 8px" }}
-              >
-                編集
-              </button>
+              {viewMode === "remote" ? (
+                <span style={{ fontSize: "10px", color: "#888" }}>
+                  {memo.user_id ? `by ${memo.user_id}` : ""}
+                </span>
+              ) : (
+                <button
+                  onClick={() => handleEdit(memo)}
+                  style={{ fontSize: "12px", padding: "2px 8px" }}
+                >
+                  編集
+                </button>
+              )}
             </div>
           </li>
         ))}
       </ul>
 
-      {currentPageMemos.length === 0 && (
+      {currentList.length === 0 && (
         <p style={{ textAlign: "center", color: "#888" }}>メモはありません</p>
       )}
     </div>
