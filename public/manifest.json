@@ -5,9 +5,17 @@
   "description": "現在のURLに紐づくメモを保存します",
   "permissions": [
     "storage",
-    "activeTab"
+    "activeTab",
+    "tabs"
   ],
   "action": {
     "default_popup": "index.html"
-  }
+  },
+  "content_scripts":[
+    {
+    "matches":["<all_urls>"],
+    "js":["content.js"],
+    "run_at": "document_idle"
+    }
+  ]
 }
