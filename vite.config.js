@@ -6,6 +6,7 @@ import { resolve } from "path";
 export default defineConfig({
   plugins: [react()],
   build: {
+    outDir: "extension",
     rollupOptions: {
       input: {
         main: resolve(__dirname, "index.html"),
