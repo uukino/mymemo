@@ -11,9 +11,19 @@ const MemoUpdate=(allMemos)=>{
     const currentUrl=location.href;
     const memos = (allMemos||[]).filter(memo=>memo.url===currentUrl);
     console.log(memos);
-    console.log(currentUrl);
     memos.forEach((memo, i) => {
         const div = document.createElement('div');
+        const goodButton=document.createElement('button');
+        goodButton.textContent='👍';
+        goodButton.onclick=()=>{
+            memo.liked=memo.liked?false:true;
+            memo.good=memo.good<0?0:memo.good||0;//goodの初期化,負の値防止
+            console.log(memo.liked);
+            memo.good += memo.liked ? 1 : -1;
+            chrome.storage.local.set({memos:allMemos});
+            console.log(memo.good);
+        }
+        goodButton.style.marginRight='4px';
         div.textContent = memo.text;
         div.className='page-memo';
         Object.assign(div.style, {
@@ -26,6 +36,12 @@ const MemoUpdate=(allMemos)=>{
         zIndex: 999999,
         display: memo.hidden ? 'none' : 'block',
         });
+        Object.assign(goodButton.style,{
+            background: memo.liked?'#ff8080':'#eee',
+            border:'1px solid #ccc',
+            cursor:'pointer',
+        });
+        div.appendChild(goodButton);
         MemoDrag(div,memo);
         document.body.appendChild(div);
     });
@@ -59,9 +75,7 @@ const MemoDrag=(el,memo)=>{
             if(idx!==-1){
                 memos[idx]=memo;
                 chrome.storage.local.set({memos});
-                console.log(memos);
             }
         });
     });
-
 }
