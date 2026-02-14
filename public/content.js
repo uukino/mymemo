@@ -37,8 +37,9 @@ const MemoUpdate=(allMemos)=>{
         display: memo.hidden ? 'none' : 'block',
         });
         Object.assign(goodButton.style,{
-            background: memo.liked?'#ff8080':'#eee',
+            background: memo.liked?'#9b9898':'#eee',
             border:'1px solid #ccc',
+            borderRadius:'4px',
             cursor:'pointer',
         });
         div.appendChild(goodButton);
