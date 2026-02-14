@@ -33,8 +33,10 @@ const MemoUpdate=(allMemos)=>{
         background: '#fff8b0',
         padding: '8px',
         border: '1px solid #ccc',
+        borderRadius: '4px',
         zIndex: 999999,
         display: memo.hidden ? 'none' : 'block',
+        whiteSpace: 'pre-wrap',
         });
         Object.assign(goodButton.style,{
             background: memo.liked?'#9b9898':'#eee',

@@ -1,14 +1,28 @@
-function MemoList({ viewMode, currentList, formatTimestamp, handleEdit }) {
+function MemoList({ viewMode, currentList, formatTimestamp, handleEdit, deleteMemo }) {
+  // ↑ 引数に deleteMemo を追加しました
+
   return (
     <div>
       <hr />
 
       {/* リスト表示エリア */}
       <h3>このページのメモ一覧 ({currentList.length})</h3>
-      <ul>
+      <ul style={{ listStyle: "none", padding: 0 }}>
         {currentList.map((memo) => (
-          <li key={memo.id}>
-            <div>{memo.text}</div>
+          <li 
+            key={memo.id}
+            style={{
+              border: "1px solid #eee",
+              padding: "8px",
+              marginBottom: "8px",
+              borderRadius: "4px",
+              backgroundColor: "#f9f9f9",
+              color: "#333",
+            }}
+          >
+            <div style={{ whiteSpace: "pre-wrap", marginBottom: "4px" }}>
+              {memo.text}
+            </div>
             <div
               style={{
                 display: "flex",
@@ -19,23 +33,43 @@ function MemoList({ viewMode, currentList, formatTimestamp, handleEdit }) {
               <span style={{ fontSize: "10px", color: "#888" }}>
                 {formatTimestamp(memo)}
               </span>
+              
               {viewMode === "remote" ? (
                 <span style={{ fontSize: "10px", color: "#888" }}>
                   {memo.user_id ? `by ${memo.user_id}` : ""}
                 </span>
               ) : (
-                <button
-                  onClick={() => handleEdit(memo)}
-                  style={{ fontSize: "12px", padding: "2px 8px" }}
-                >
-                  編集
-                </button>
+                /* ▼ 変更: 編集と削除ボタンを並べる */
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <button
+                    onClick={() => handleEdit(memo)}
+                    style={{ fontSize: "12px", padding: "2px 8px" }}
+                  >
+                    編集
+                  </button>
+                  <button
+                    onClick={() => deleteMemo(memo.id)}
+                    style={{
+                      fontSize: "12px",
+                      padding: "2px 8px",
+                      backgroundColor: "#ffebee",
+                      color: "#c62828",
+                      border: "1px solid #ffcdd2",
+                      cursor: "pointer"
+                    }}
+                  >
+                    削除
+                  </button>
+                </div>
+                /* ▲ 変更ここまで */
               )}
             </div>
           </li>
         ))}
       </ul>
-      {currentList.length === 0 && <p>メモはありません</p>}
+      {currentList.length === 0 && (
+        <p style={{ textAlign: "center", color: "#888" }}>メモはありません</p>
+      )}
     </div>
   );
 }
