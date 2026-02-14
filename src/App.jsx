@@ -19,12 +19,12 @@ function App() {
 
   // 1. 初回ロード時に現在のURLを取得し、保存されたメモを読み込む
   useEffect(() => {
+    loadMemos();
     if (typeof chrome !== "undefined" && chrome.tabs) {
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         if (tabs[0] && tabs[0].url) {
           const url = tabs[0].url;
           setCurrentUrl(url);
-          loadMemos();
         }
       });
     } else {
