@@ -170,8 +170,22 @@ function App() {
 
   return (
     <div style={{ width: "300px", padding: "16px", fontFamily: "sans-serif" }}>
-      <h2>📝 URL Memo</h2>
-
+      <div style={{display: "flex", alignItems: "center", marginBottom: "12px"}}>
+        <h2>📝 URL Memo</h2>
+        <button onClick={()=>{
+          console.log("toggle all memo");
+          chrome.storage.local.get(['memos'],res=>{
+            const memos=res.memos||[];
+            memos.forEach(m=>{
+              console.log(m)
+              m.hidden=m.hidden?false:true;
+          });
+            console.log(memos);
+            chrome.storage.local.set({memos});
+            console.log(memos);
+          });
+        }}>&times;</button>
+      </div>
       <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
         <button
           onClick={() => setViewMode("local")}
