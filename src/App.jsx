@@ -185,6 +185,17 @@ function App() {
             console.log(memos);
           });
         }}>&times;</button>
+        <button onClick={()=>{
+          chrome.storage.local.get(['memos'],res=>{
+            const memos=res.memos||[];
+            memos.forEach(m=>{
+              console.log(m);
+              if(!m.liked)m.hidden=m.hidden?false:true;
+            });
+            console.log("delete all memo");
+            chrome.storage.local.set({memos});
+          });
+      }}><span style={{fontSize:"12px"}}>&times;</span></button>
       </div>
       <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
         <button
