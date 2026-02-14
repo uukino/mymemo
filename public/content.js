@@ -24,6 +24,7 @@ const MemoUpdate=(allMemos)=>{
         padding: '8px',
         border: '1px solid #ccc',
         zIndex: 999999,
+        display: memo.hidden ? 'none' : 'block',
         });
         MemoDrag(div,memo);
         document.body.appendChild(div);
@@ -52,13 +53,13 @@ const MemoDrag=(el,memo)=>{
         el.style.cursor='grab';
         memo.x=el.offsetLeft;
         memo.y=el.offsetTop;
-
         chrome.storage.local.get(['memos'],res=>{
             const memos=res.memos||[];
             const idx=memos.findIndex(m=>m.id===memo.id);
             if(idx!==-1){
                 memos[idx]=memo;
                 chrome.storage.local.set({memos});
+                console.log(memos);
             }
         });
     });
