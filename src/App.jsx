@@ -1,34 +1,33 @@
 import { useState, useEffect } from "react";
+import MemoInput from "./MemoInput";
+import MemoList from "./MemoList";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
 const PUBLIC_USER_ID = import.meta.env.VITE_PUBLIC_USER_ID || "";
 
 function App() {
   const [currentUrl, setCurrentUrl] = useState("");
-  const [memos, setMemos] = useState([]); // 全てのメモ
+  const [memos, setMemos] = useState([]);
   const [viewMode, setViewMode] = useState("local");
   const [remoteMemos, setRemoteMemos] = useState([]);
   const [remoteLoading, setRemoteLoading] = useState(false);
   const [remoteError, setRemoteError] = useState("");
+  const [inputText, setInputText] = useState("");
+  const [editingId, setEditingId] = useState(null);
   const [shareMessage, setShareMessage] = useState("");
   const [shareError, setShareError] = useState("");
-  const [inputText, setInputText] = useState("");
-  const [editingId, setEditingId] = useState(null); // 編集中のメモID
 
   // 1. 初回ロード時に現在のURLを取得し、保存されたメモを読み込む
   useEffect(() => {
-    // Chrome拡張環境下かどうかチェック
+    loadMemos();
     if (typeof chrome !== "undefined" && chrome.tabs) {
-      // 現在のタブのURLを取得
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         if (tabs[0] && tabs[0].url) {
           const url = tabs[0].url;
           setCurrentUrl(url);
-          loadMemos(); // URL取得後にメモをロード
         }
       });
     } else {
-      // 開発用（ブラウザで直接開いた場合）のダミー
       setCurrentUrl("http://localhost");
     }
   }, []);
@@ -58,13 +57,11 @@ function App() {
     const now = new Date().toLocaleString();
 
     if (editingId) {
-      // 編集モード：既存のメモを更新
       newMemos = memos.map((memo) =>
         memo.id === editingId ? { ...memo, text, updatedAt: now } : memo,
       );
       setEditingId(null);
     } else {
-      // 新規作成モード
       const newMemo = {
         id: Date.now(),
         url: currentUrl,
@@ -75,11 +72,9 @@ function App() {
       newMemos = [...memos, newMemo];
     }
 
-    // ReactのState更新
     setMemos(newMemos);
     setInputText("");
 
-    // Chrome Storageに保存
     if (typeof chrome !== "undefined" && chrome.storage) {
       chrome.storage.local.set({ memos: newMemos }, () => {
         console.log("Saved");
@@ -144,21 +139,17 @@ function App() {
     }
   };
 
-  // 4. 編集ボタンを押した時の処理
   const handleEdit = (memo) => {
     setInputText(memo.text);
     setEditingId(memo.id);
   };
 
-  // 5. キャンセルボタン処理
   const handleCancel = () => {
     setInputText("");
     setEditingId(null);
   };
 
-  // 現在のURLに紐づくメモだけをフィルタリングして表示
   const currentPageMemos = memos.filter((memo) => memo.url === currentUrl);
-
   const currentList = viewMode === "remote" ? remoteMemos : currentPageMemos;
 
   const formatTimestamp = (memo) =>
@@ -170,7 +161,9 @@ function App() {
 
   return (
     <div style={{ width: "300px", padding: "16px", fontFamily: "sans-serif" }}>
-      <div style={{display: "flex", alignItems: "center", marginBottom: "12px"}}>
+      <div
+        style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}
+      >
         <h2>📝 URL Memo</h2>
         <button onClick={()=>{
           console.log("toggle all memo");
@@ -197,6 +190,7 @@ function App() {
           });
       }}><span style={{fontSize:"12px"}}>&times;</span></button>
       </div>
+
       <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
         <button
           onClick={() => setViewMode("local")}
@@ -212,7 +206,6 @@ function App() {
         </button>
       </div>
 
-      {/* URL表示エリア */}
       <div
         style={{
           fontSize: "12px",
@@ -225,40 +218,16 @@ function App() {
       </div>
 
       {viewMode === "local" && (
-        <>
-          {/* 入力エリア */}
-          <textarea
-            style={{
-              width: "100%",
-              height: "80px",
-              marginBottom: "8px",
-              boxSizing: "border-box",
-            }}
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            placeholder="メモを入力..."
-          />
-
-          <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
-            <button onClick={saveMemo} style={{ flex: 1 }}>
-              {editingId ? "更新する" : "保存する"}
-            </button>
-            <button onClick={shareMemo} style={{ flex: 1 }}>
-              共有
-            </button>
-            {editingId && (
-              <button onClick={handleCancel} style={{ background: "#ccc" }}>
-                キャンセル
-              </button>
-            )}
-          </div>
-          {shareMessage && (
-            <p style={{ color: "#2b7", fontSize: "12px" }}>{shareMessage}</p>
-          )}
-          {shareError && (
-            <p style={{ color: "#c00", fontSize: "12px" }}>{shareError}</p>
-          )}
-        </>
+        <MemoInput
+          inputText={inputText}
+          setInputText={setInputText}
+          editingId={editingId}
+          saveMemo={saveMemo}
+          shareMemo={shareMemo}
+          handleCancel={handleCancel}
+          shareMessage={shareMessage}
+          shareError={shareError}
+        />
       )}
 
       {viewMode === "remote" && (
@@ -276,56 +245,12 @@ function App() {
         </div>
       )}
 
-      <hr />
-
-      {/* リスト表示エリア */}
-      <h3>このページのメモ一覧 ({currentList.length})</h3>
-      <ul style={{ listStyle: "none", padding: 0 }}>
-        {currentList.map((memo) => (
-          <li
-            key={memo.id}
-            style={{
-              border: "1px solid #eee",
-              padding: "8px",
-              marginBottom: "8px",
-              borderRadius: "4px",
-              backgroundColor: "#f9f9f9",
-              color: "#333",
-            }}
-          >
-            <div style={{ whiteSpace: "pre-wrap", marginBottom: "4px" }}>
-              {memo.text}
-            </div>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <span style={{ fontSize: "10px", color: "#888" }}>
-                {formatTimestamp(memo)}
-              </span>
-              {viewMode === "remote" ? (
-                <span style={{ fontSize: "10px", color: "#888" }}>
-                  {memo.user_id ? `by ${memo.user_id}` : ""}
-                </span>
-              ) : (
-                <button
-                  onClick={() => handleEdit(memo)}
-                  style={{ fontSize: "12px", padding: "2px 8px" }}
-                >
-                  編集
-                </button>
-              )}
-            </div>
-          </li>
-        ))}
-      </ul>
-
-      {currentList.length === 0 && (
-        <p style={{ textAlign: "center", color: "#888" }}>メモはありません</p>
-      )}
+      <MemoList
+        viewMode={viewMode}
+        currentList={currentList}
+        formatTimestamp={formatTimestamp}
+        handleEdit={handleEdit}
+      />
     </div>
   );
 }
