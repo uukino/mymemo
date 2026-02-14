@@ -165,23 +165,30 @@ function App() {
         style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}
       >
         <h2>📝 URL Memo</h2>
-        <button
-          onClick={() => {
-            console.log("toggle all memo");
-            chrome.storage.local.get(["memos"], (res) => {
-              const memos = res.memos || [];
-              memos.forEach((m) => {
-                console.log(m);
-                m.hidden = m.hidden ? false : true;
-              });
-              console.log(memos);
-              chrome.storage.local.set({ memos });
-              console.log(memos);
+        <button onClick={()=>{
+          console.log("toggle all memo");
+          chrome.storage.local.get(['memos'],res=>{
+            const memos=res.memos||[];
+            memos.forEach(m=>{
+              console.log(m)
+              m.hidden=m.hidden?false:true;
+          });
+            console.log(memos);
+            chrome.storage.local.set({memos});
+            console.log(memos);
+          });
+        }}>&times;</button>
+        <button onClick={()=>{
+          chrome.storage.local.get(['memos'],res=>{
+            const memos=res.memos||[];
+            memos.forEach(m=>{
+              console.log(m);
+              if(!m.liked)m.hidden=m.hidden?false:true;
             });
-          }}
-        >
-          &times;
-        </button>
+            console.log("delete all memo");
+            chrome.storage.local.set({memos});
+          });
+      }}><span style={{fontSize:"12px"}}>&times;</span></button>
       </div>
 
       <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
