@@ -45,3 +45,28 @@ app.post("/memos", async (req, res) => {
 app.listen(process.env.PORT || 3001, () => {
   console.log("API running");
 });
+
+app.post("/users/register", async (req, res) => {
+  const { name, password } = req.body;
+  // Supabaseの`users`テーブルに保存
+  const { data, error } = await supabase
+    .from("users")
+    .insert({ name, password })
+    .select()
+    .single();
+  if (error) return res.status(400).json({ message: "User already exists" });
+  res.json({ id: data.id, name: data.name });
+});
+
+app.post("/users/login", async (req, res) => {
+  const { name, password } = req.body;
+  const { data, error } = await supabase
+    .from("users")
+    .select("id, name")
+    .eq("name", name)
+    .eq("password", password)
+    .single();
+  if (error || !data)
+    return res.status(401).json({ message: "Invalid credentials" });
+  res.json({ id: data.id, name: data.name });
+});
