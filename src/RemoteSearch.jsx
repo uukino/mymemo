@@ -17,7 +17,7 @@ function RemoteSearch({ apiBase, onResults }) {
     setError("");
     try {
       const response = await fetch(
-        `${apiBase}/memos/search?q=${encodeURIComponent(q)}`,
+        `${apiBase}/memos?q=${encodeURIComponent(q)}`,
       );
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
