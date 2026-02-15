@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import MemoInput from "./MemoInput";
 import MemoList from "./MemoList";
+
+import MyPage from "./MyPage";
 import RemoteSearch from "./RemoteSearch";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
@@ -199,9 +201,15 @@ function App() {
     "";
 
   return (
-    <div style={{ width: "300px", padding: "16px", fontFamily: "sans-serif" }}>
+    <div
+      style={{ width: "300px", padding: "16px", fontFamily: "sans-serif" }}
+    >
       <div
-        style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          marginBottom: "12px",
+        }}
       >
         <h2>📝 URL Memo</h2>
         <button
@@ -251,6 +259,12 @@ function App() {
         >
           リモート
         </button>
+        <button
+          onClick={() => setViewMode("mypage")}
+          style={{ flex: 1, background: viewMode === "mypage" ? "#ddd" : "" }}
+        >
+          マイページ
+        </button>
       </div>
 
       <div
@@ -264,18 +278,23 @@ function App() {
         Current: {currentUrl}
       </div>
 
-      {viewMode === "local" && (
-        <MemoInput
-          inputText={inputText}
-          setInputText={setInputText}
-          editingId={editingId}
-          saveMemo={saveMemo}
-          shareMemo={shareMemo}
-          handleCancel={handleCancel}
-          shareMessage={shareMessage}
-          shareError={shareError}
-        />
-      )}
+      {viewMode === "mypage" ? (
+        <MyPage onBack={() => setViewMode("local")} memos={memos} />
+      ) : (
+        /* ▼ ここからが viewMode !== 'mypage' のときの中身 ▼ */
+        <>
+          {viewMode === "local" && (
+            <MemoInput
+              inputText={inputText}
+              setInputText={setInputText}
+              editingId={editingId}
+              saveMemo={saveMemo}
+              shareMemo={shareMemo}
+              handleCancel={handleCancel}
+              shareMessage={shareMessage}
+              shareError={shareError}
+            />
+          )}
 
       {viewMode === "remote" && (
         <div style={{ marginBottom: "16px" }}>
@@ -291,18 +310,19 @@ function App() {
           {remoteError && (
             <p style={{ color: "#c00", fontSize: "12px" }}>{remoteError}</p>
           )}
-        </div>
-      )}
 
-      <MemoList
-        viewMode={viewMode}
-        currentList={currentList}
-        formatTimestamp={formatTimestamp}
-        handleEdit={handleEdit}
-        pasteMemo={pasteMemo}
-        changeColor={changeColor}
-        deleteMemo={deleteMemo}
-      />
+          <MemoList
+            viewMode={viewMode}
+            currentList={currentList}
+            formatTimestamp={formatTimestamp}
+            handleEdit={handleEdit}
+            pasteMemo={pasteMemo}
+            changeColor={changeColor}
+            deleteMemo={deleteMemo}
+          />
+        </>
+      )
+      }
     </div>
   );
 }
