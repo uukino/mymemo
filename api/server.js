@@ -24,6 +24,20 @@ app.get("/memos", async (req, res) => {
   res.json(data);
 });
 
+app.get("/memos/search", async (req, res) => {
+  const { q } = req.query;
+  if (!q || !q.trim()) return res.status(400).json({ error: "q is required" });
+
+  const { data, error } = await supabase
+    .from("memos")
+    .select("*")
+    .ilike("text", `%${q.trim()}%`)
+    .order("created_at", { ascending: false });
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
 app.post("/memos", async (req, res) => {
   const { url, text, user_id } = req.body; // 本番はJWTから user_id を取得
   const { data, error } = await supabase
