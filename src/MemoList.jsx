@@ -1,5 +1,4 @@
-function MemoList({ viewMode, currentList, formatTimestamp, handleEdit, deleteMemo }) {
-  // ↑ 引数に deleteMemo を追加しました
+function MemoList({ viewMode, currentList, formatTimestamp, handleEdit, pasteMemo, changeColor, deleteMemo}) {
 
   return (
     <div>
@@ -39,8 +38,15 @@ function MemoList({ viewMode, currentList, formatTimestamp, handleEdit, deleteMe
                   {memo.user_id ? `by ${memo.user_id}` : ""}
                 </span>
               ) : (
-                /* ▼ 変更: 編集と削除ボタンを並べる */
+
                 <div style={{ display: "flex", gap: "8px" }}>
+                  <input type="color" value={memo.memoColor||"#fff8b0"} onChange={(e)=>{
+                    changeColor(memo,e);
+                  }}></input>
+                  <button onClick={()=>pasteMemo(memo)}>
+                    貼付
+                  </button>
+                
                   <button
                     onClick={() => handleEdit(memo)}
                     style={{ fontSize: "12px", padding: "2px 8px" }}

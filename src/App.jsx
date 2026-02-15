@@ -68,6 +68,11 @@ function App() {
         text,
         createdAt: now,
         updatedAt: now,
+        liked: false,
+        hidden: false,
+        good: 0,
+        pasted:false,
+        memoColor:"#fff8b0",
       };
       newMemos = [...memos, newMemo];
     }
@@ -138,6 +143,21 @@ function App() {
       setRemoteLoading(false);
     }
   };
+
+  const changeColor=(memo,e)=>{
+    memo.memoColor=e.target.value;
+    const newMemos=memos.map(m=>m.id===memo.id?memo:m);
+    chrome.storage.local.set({memos:newMemos});
+    setMemos(newMemos);
+    console.log(newMemos);
+  }
+  const pasteMemo=(memo)=>{
+    memo.pasted=memo.pasted?false:true;
+    const newMemos=memos.map(m=>m.id===memo.id?memo:m);
+    chrome.storage.local.set({memos:newMemos});
+    setMemos(newMemos);
+    console.log(newMemos);
+  }
 
   // メモを削除する関数
   const deleteMemo = (id) => {
@@ -268,6 +288,8 @@ function App() {
         currentList={currentList}
         formatTimestamp={formatTimestamp}
         handleEdit={handleEdit}
+        pasteMemo={pasteMemo}
+        changeColor={changeColor}
         deleteMemo={deleteMemo}
       />
     </div>
