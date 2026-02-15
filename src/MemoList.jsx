@@ -39,11 +39,14 @@ function MemoList({ viewMode, currentList, formatTimestamp, handleEdit, pasteMem
                 </span>
               ) : (
 
-                <div style={{ display: "flex", gap: "8px" }}>
+                <div style={{ display: "flex", gap: "4px" }}>
                   <input type="color" value={memo.memoColor||"#fff8b0"} onChange={(e)=>{
                     changeColor(memo,e);
                   }}></input>
-                  <button onClick={()=>pasteMemo(memo)}>
+                  <button 
+                    onClick={()=>pasteMemo(memo)}
+                    style={{ fontSize: "12px", padding: "2px 8px" }}
+                    >
                     貼付
                   </button>
                 
