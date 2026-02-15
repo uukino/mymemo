@@ -159,6 +159,24 @@ function App() {
     console.log(newMemos);
   }
 
+  // メモを削除する関数
+  const deleteMemo = (id) => {
+    if (!window.confirm("このメモを削除してもよろしいですか？")) return;
+
+    const newMemos = memos.filter((memo) => memo.id !== id);
+    setMemos(newMemos);
+
+    if (typeof chrome !== "undefined" && chrome.storage) {
+      chrome.storage.local.set({ memos: newMemos });
+    }
+
+    // 編集中のメモを削除した場合のリセット処理
+    if (editingId === id) {
+      setInputText("");
+      setEditingId(null);
+    }
+  };
+
   const handleEdit = (memo) => {
     setInputText(memo.text);
     setEditingId(memo.id);
@@ -272,6 +290,7 @@ function App() {
         handleEdit={handleEdit}
         pasteMemo={pasteMemo}
         changeColor={changeColor}
+        deleteMemo={deleteMemo}
       />
     </div>
   );
