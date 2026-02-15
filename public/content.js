@@ -12,9 +12,12 @@ const MemoUpdate=(allMemos)=>{
     const memos = (allMemos||[]).filter(memo=>memo.url===currentUrl);
     console.log(memos);
     memos.forEach((memo, i) => {
+        console.log(memo);
+        console.log(memo.pasted);
+        if(!memo.pasted)return;
         const div = document.createElement('div');
         const goodButton=document.createElement('button');
-        goodButton.textContent='👍';
+        goodButton.textContent='👍'+(memo.good||0);
         goodButton.onclick=()=>{
             memo.liked=memo.liked?false:true;
             memo.good=memo.good<0?0:memo.good||0;//goodの初期化,負の値防止
@@ -30,7 +33,7 @@ const MemoUpdate=(allMemos)=>{
         position: 'absolute',
         top: `${memo.y??(120 + i * 80)}px`,
         left: `${memo.x??120}px`,
-        background: '#fff8b0',
+        background: `${memo.memoColor||"#fff8b0"}`,
         padding: '8px',
         border: '1px solid #ccc',
         borderRadius: '4px',
@@ -39,9 +42,9 @@ const MemoUpdate=(allMemos)=>{
         whiteSpace: 'pre-wrap',
         });
         Object.assign(goodButton.style,{
-            background: memo.liked?'#9b9898':'#eee',
+            background: memo.liked?'#9b9898':'none',
             border:'1px solid #ccc',
-            borderRadius:'4px',
+            borderRadius:'10px',
             cursor:'pointer',
         });
         div.appendChild(goodButton);
