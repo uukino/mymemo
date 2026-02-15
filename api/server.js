@@ -15,11 +15,19 @@ const supabase = createClient(
 );
 
 app.get("/memos", async (req, res) => {
-  const { url } = req.query;
-  const { data, error } = await supabase
-    .from("memos")
-    .select("*")
-    .eq("url", url);
+  const { url, q } = req.query;
+
+  let query = supabase.from("memos").select("*");
+
+  if (q && q.trim()) {
+    query = query.ilike("text", `%${q.trim()}%`);
+  } else if (url && url.trim()) {
+    query = query.eq("url", url.trim());
+  } else {
+    return res.status(400).json({ error: "url or q is required" });
+  }
+
+  const { data, error } = await query.order("created_at", { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });

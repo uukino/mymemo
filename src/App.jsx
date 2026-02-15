@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import MemoInput from "./MemoInput";
 import MemoList from "./MemoList";
+
 import MyPage from "./MyPage";
+import RemoteSearch from "./RemoteSearch";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
 const PUBLIC_USER_ID = import.meta.env.VITE_PUBLIC_USER_ID || "";
@@ -294,21 +296,19 @@ function App() {
             />
           )}
 
-          {viewMode === "remote" && (
-            <div style={{ marginBottom: "16px" }}>
-              <button
-                onClick={fetchRemoteMemos}
-                style={{ width: "100%" }}
-                disabled={remoteLoading}
-              >
-                {remoteLoading ? "読み込み中..." : "リモート更新"}
-              </button>
-              {remoteError && (
-                <p style={{ color: "#c00", fontSize: "12px" }}>
-                  {remoteError}
-                </p>
-              )}
-            </div>
+      {viewMode === "remote" && (
+        <div style={{ marginBottom: "16px" }}>
+          <button
+            onClick={fetchRemoteMemos}
+            style={{ width: "100%" }}
+            disabled={remoteLoading}
+          >
+            {remoteLoading ? "読み込み中..." : "リモート更新"}
+          </button>
+
+          <RemoteSearch apiBase={API_BASE} onResults={setRemoteMemos} />
+          {remoteError && (
+            <p style={{ color: "#c00", fontSize: "12px" }}>{remoteError}</p>
           )}
 
           <MemoList
