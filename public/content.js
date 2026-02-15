@@ -14,11 +14,11 @@ const MemoUpdate=(allMemos)=>{
     memos.forEach((memo, i) => {
         console.log(memo);
         console.log(memo.pasted);
-        if(memo.isCanvas&&!memo.pasted){
+        if(memo.isCanvas&&memo.pasted){
             renderCanvas(memo,i,allMemos);
             return;
         }
-        if(!memo.pasted&&!memo.isCanvas)return;
+        if(!memo.pasted)return;
         const div = document.createElement('div');
         const goodButton=document.createElement('button');
         goodButton.textContent='👍'+(memo.good||0);
