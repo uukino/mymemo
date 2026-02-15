@@ -17,6 +17,8 @@ function App() {
   const [memos, setMemos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [query, setQuery] = useState("");
+  const [searching, setSearching] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -53,6 +55,32 @@ function App() {
     void fetchMemos(targetUrl);
   };
 
+  const searchMemos = async (q) => {
+    if (!q.trim()) return;
+    setSearching(true);
+    setError("");
+    try {
+      const response = await fetch(
+        `${apiBase}/memos/search?q=${encodeURIComponent(q)}`,
+      );
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      const data = await response.json();
+      setMemos(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err?.message || "検索に失敗しました");
+      setMemos([]);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    void searchMemos(query);
+  };
+
   return (
     <div style={{ width: "360px", padding: "16px", fontFamily: "sans-serif" }}>
       <h2>🌐 Public URL Memo</h2>
@@ -74,6 +102,26 @@ function App() {
         />
         <button type="submit" style={{ width: "100%" }} disabled={loading}>
           {loading ? "読み込み中..." : "メモを取得"}
+        </button>
+      </form>
+
+      <form onSubmit={handleSearch}>
+        <div style={{ fontSize: "12px", color: "#666", marginBottom: "8px" }}>
+          単語検索
+        </div>
+        <input
+          style={{
+            width: "100%",
+            marginBottom: "8px",
+            boxSizing: "border-box",
+            padding: "6px 8px",
+          }}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="検索ワード"
+        />
+        <button type="submit" style={{ width: "100%" }} disabled={searching}>
+          {searching ? "検索中..." : "検索"}
         </button>
       </form>
 

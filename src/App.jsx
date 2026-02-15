@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import MemoInput from "./MemoInput";
 import MemoList from "./MemoList";
-
+import RemoteSearch from "./RemoteSearch";
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
 const PUBLIC_USER_ID = import.meta.env.VITE_PUBLIC_USER_ID || "";
 
@@ -183,30 +183,23 @@ function App() {
         style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}
       >
         <h2>📝 URL Memo</h2>
-        <button onClick={()=>{
-          console.log("toggle all memo");
-          chrome.storage.local.get(['memos'],res=>{
-            const memos=res.memos||[];
-            memos.forEach(m=>{
-              console.log(m)
-              m.hidden=m.hidden?false:true;
-          });
-            console.log(memos);
-            chrome.storage.local.set({memos});
-            console.log(memos);
-          });
-        }}>&times;</button>
-        <button onClick={()=>{
-          chrome.storage.local.get(['memos'],res=>{
-            const memos=res.memos||[];
-            memos.forEach(m=>{
-              console.log(m);
-              if(!m.liked)m.hidden=m.hidden?false:true;
+        <button
+          onClick={() => {
+            console.log("toggle all memo");
+            chrome.storage.local.get(["memos"], (res) => {
+              const memos = res.memos || [];
+              memos.forEach((m) => {
+                console.log(m);
+                m.hidden = m.hidden ? false : true;
+              });
+              console.log(memos);
+              chrome.storage.local.set({ memos });
+              console.log(memos);
             });
-            console.log("delete all memo");
-            chrome.storage.local.set({memos});
-          });
-      }}><span style={{fontSize:"12px"}}>&times;</span></button>
+          }}
+        >
+          &times;
+        </button>
       </div>
 
       <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
@@ -257,6 +250,9 @@ function App() {
           >
             {remoteLoading ? "読み込み中..." : "リモート更新"}
           </button>
+
+          <RemoteSearch apiBase={API_BASE} onResults={setRemoteMemos} />
+
           {remoteError && (
             <p style={{ color: "#c00", fontSize: "12px" }}>{remoteError}</p>
           )}
