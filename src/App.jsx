@@ -144,6 +144,15 @@ function App() {
     }
   };
 
+  const filterMemo=(memo)=>{
+    console.log("toggle all memo");
+    memo.hidden=memo.hidden?false:true;
+    const newMemos=memos.map(m=>m.id===memo.id?memo:m);
+    chrome.storage.local.set({memos:newMemos});
+    setMemos(newMemos);
+    console.log(newMemos.hidden);
+  }
+
   const changeColor=(memo,e)=>{
     memo.memoColor=e.target.value;
     const newMemos=memos.map(m=>m.id===memo.id?memo:m);
@@ -203,30 +212,12 @@ function App() {
         style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}
       >
         <h2>📝 URL Memo</h2>
-        <button onClick={()=>{
-          console.log("toggle all memo");
-          chrome.storage.local.get(['memos'],res=>{
-            const memos=res.memos||[];
-            memos.forEach(m=>{
-              console.log(m)
-              m.hidden=m.hidden?false:true;
-          });
-            console.log(memos);
-            chrome.storage.local.set({memos});
-            console.log(memos);
-          });
-        }}>&times;</button>
-        <button onClick={()=>{
-          chrome.storage.local.get(['memos'],res=>{
-            const memos=res.memos||[];
-            memos.forEach(m=>{
-              console.log(m);
-              if(!m.liked)m.hidden=m.hidden?false:true;
-            });
-            console.log("delete all memo");
-            chrome.storage.local.set({memos});
-          });
-      }}><span style={{fontSize:"12px"}}>&times;</span></button>
+        <button onClick={()=>filterMemo(memos.find(m=>m.url===currentUrl))}>
+          &times;
+        </button>
+        <button onClick={()=>filterMemo(memos.find(m=>m.url===currentUrl&&!m.liked))}>
+            <span style={{fontSize:"12px"}}>&times;</span>
+        </button>
       </div>
 
       <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
