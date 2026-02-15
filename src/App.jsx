@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import MemoInput from "./MemoInput";
 import MemoList from "./MemoList";
+import MyPage from "./MyPage";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
 const PUBLIC_USER_ID = import.meta.env.VITE_PUBLIC_USER_ID || "";
@@ -71,8 +72,8 @@ function App() {
         liked: false,
         hidden: false,
         good: 0,
-        pasted:false,
-        memoColor:"#fff8b0",
+        pasted: false,
+        memoColor: "#fff8b0",
       };
       newMemos = [...memos, newMemo];
     }
@@ -144,20 +145,20 @@ function App() {
     }
   };
 
-  const changeColor=(memo,e)=>{
-    memo.memoColor=e.target.value;
-    const newMemos=memos.map(m=>m.id===memo.id?memo:m);
-    chrome.storage.local.set({memos:newMemos});
+  const changeColor = (memo, e) => {
+    memo.memoColor = e.target.value;
+    const newMemos = memos.map((m) => (m.id === memo.id ? memo : m));
+    chrome.storage.local.set({ memos: newMemos });
     setMemos(newMemos);
     console.log(newMemos);
-  }
-  const pasteMemo=(memo)=>{
-    memo.pasted=memo.pasted?false:true;
-    const newMemos=memos.map(m=>m.id===memo.id?memo:m);
-    chrome.storage.local.set({memos:newMemos});
+  };
+  const pasteMemo = (memo) => {
+    memo.pasted = memo.pasted ? false : true;
+    const newMemos = memos.map((m) => (m.id === memo.id ? memo : m));
+    chrome.storage.local.set({ memos: newMemos });
     setMemos(newMemos);
     console.log(newMemos);
-  }
+  };
 
   // メモを削除する関数
   const deleteMemo = (id) => {
@@ -198,35 +199,49 @@ function App() {
     "";
 
   return (
-    <div style={{ width: "300px", padding: "16px", fontFamily: "sans-serif" }}>
+    <div
+      style={{ width: "300px", padding: "16px", fontFamily: "sans-serif" }}
+    >
       <div
-        style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          marginBottom: "12px",
+        }}
       >
         <h2>📝 URL Memo</h2>
-        <button onClick={()=>{
-          console.log("toggle all memo");
-          chrome.storage.local.get(['memos'],res=>{
-            const memos=res.memos||[];
-            memos.forEach(m=>{
-              console.log(m)
-              m.hidden=m.hidden?false:true;
-          });
-            console.log(memos);
-            chrome.storage.local.set({memos});
-            console.log(memos);
-          });
-        }}>&times;</button>
-        <button onClick={()=>{
-          chrome.storage.local.get(['memos'],res=>{
-            const memos=res.memos||[];
-            memos.forEach(m=>{
-              console.log(m);
-              if(!m.liked)m.hidden=m.hidden?false:true;
+        <button
+          onClick={() => {
+            console.log("toggle all memo");
+            chrome.storage.local.get(["memos"], (res) => {
+              const memos = res.memos || [];
+              memos.forEach((m) => {
+                console.log(m);
+                m.hidden = m.hidden ? false : true;
+              });
+              console.log(memos);
+              chrome.storage.local.set({ memos });
+              console.log(memos);
             });
-            console.log("delete all memo");
-            chrome.storage.local.set({memos});
-          });
-      }}><span style={{fontSize:"12px"}}>&times;</span></button>
+          }}
+        >
+          &times;
+        </button>
+        <button
+          onClick={() => {
+            chrome.storage.local.get(["memos"], (res) => {
+              const memos = res.memos || [];
+              memos.forEach((m) => {
+                console.log(m);
+                if (!m.liked) m.hidden = m.hidden ? false : true;
+              });
+              console.log("delete all memo");
+              chrome.storage.local.set({ memos });
+            });
+          }}
+        >
+          <span style={{ fontSize: "12px" }}>&times;</span>
+        </button>
       </div>
 
       <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
@@ -242,6 +257,12 @@ function App() {
         >
           リモート
         </button>
+        <button
+          onClick={() => setViewMode("mypage")}
+          style={{ flex: 1, background: viewMode === "mypage" ? "#ddd" : "" }}
+        >
+          マイページ
+        </button>
       </div>
 
       <div
@@ -255,43 +276,53 @@ function App() {
         Current: {currentUrl}
       </div>
 
-      {viewMode === "local" && (
-        <MemoInput
-          inputText={inputText}
-          setInputText={setInputText}
-          editingId={editingId}
-          saveMemo={saveMemo}
-          shareMemo={shareMemo}
-          handleCancel={handleCancel}
-          shareMessage={shareMessage}
-          shareError={shareError}
-        />
-      )}
-
-      {viewMode === "remote" && (
-        <div style={{ marginBottom: "16px" }}>
-          <button
-            onClick={fetchRemoteMemos}
-            style={{ width: "100%" }}
-            disabled={remoteLoading}
-          >
-            {remoteLoading ? "読み込み中..." : "リモート更新"}
-          </button>
-          {remoteError && (
-            <p style={{ color: "#c00", fontSize: "12px" }}>{remoteError}</p>
+      {viewMode === "mypage" ? (
+        <MyPage onBack={() => setViewMode("local")} memos={memos} />
+      ) : (
+        /* ▼ ここからが viewMode !== 'mypage' のときの中身 ▼ */
+        <>
+          {viewMode === "local" && (
+            <MemoInput
+              inputText={inputText}
+              setInputText={setInputText}
+              editingId={editingId}
+              saveMemo={saveMemo}
+              shareMemo={shareMemo}
+              handleCancel={handleCancel}
+              shareMessage={shareMessage}
+              shareError={shareError}
+            />
           )}
-        </div>
-      )}
 
-      <MemoList
-        viewMode={viewMode}
-        currentList={currentList}
-        formatTimestamp={formatTimestamp}
-        handleEdit={handleEdit}
-        pasteMemo={pasteMemo}
-        changeColor={changeColor}
-        deleteMemo={deleteMemo}
-      />
+          {viewMode === "remote" && (
+            <div style={{ marginBottom: "16px" }}>
+              <button
+                onClick={fetchRemoteMemos}
+                style={{ width: "100%" }}
+                disabled={remoteLoading}
+              >
+                {remoteLoading ? "読み込み中..." : "リモート更新"}
+              </button>
+              {remoteError && (
+                <p style={{ color: "#c00", fontSize: "12px" }}>
+                  {remoteError}
+                </p>
+              )}
+            </div>
+          )}
+
+          <MemoList
+            viewMode={viewMode}
+            currentList={currentList}
+            formatTimestamp={formatTimestamp}
+            handleEdit={handleEdit}
+            pasteMemo={pasteMemo}
+            changeColor={changeColor}
+            deleteMemo={deleteMemo}
+          />
+        </>
+      )
+      }
     </div>
   );
 }
