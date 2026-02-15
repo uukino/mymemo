@@ -73,6 +73,7 @@ function App() {
         good: 0,
         pasted:false,
         memoColor:"#fff8b0",
+        isCanvas:false,
       };
       newMemos = [...memos, newMemo];
     }
@@ -152,6 +153,29 @@ function App() {
     setMemos(newMemos);
     console.log(newMemos.hidden);
   }
+  const makeCanvas = () => {
+  const now = new Date().toLocaleString();
+
+  const newCanvasMemo = {
+    id: Date.now(),
+    url: currentUrl,
+    text: "",
+    createdAt: now,
+    updatedAt: now,
+    liked: false,
+    hidden: false,
+    good: 0,
+    pasted: false,
+    memoColor: "#ffffff",
+    isCanvas: true,
+  };
+
+  const newMemos = [...memos, newCanvasMemo];
+
+  setMemos(newMemos);
+  chrome.storage.local.set({ memos: newMemos });
+  console.log("Canvas memo created", newCanvasMemo);
+};
 
   const changeColor=(memo,e)=>{
     memo.memoColor=e.target.value;
@@ -218,6 +242,7 @@ function App() {
         <button onClick={()=>filterMemo(memos.find(m=>m.url===currentUrl&&!m.liked))}>
             <span style={{fontSize:"12px"}}>&times;</span>
         </button>
+        <button onClick={()=>makeCanvas()}>お絵描き</button>
       </div>
 
       <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
