@@ -16,6 +16,7 @@ import MemoInput from "./MemoInput";
 import MemoList from "./MemoList";
 import MyPage from "./MyPage";
 import RemoteSearch from "./RemoteSearch";
+import SearchMemo from "./SearchMemo"; // ★追加
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
 const PUBLIC_USER_ID = import.meta.env.VITE_PUBLIC_USER_ID || "";
@@ -34,10 +35,10 @@ function App() {
   // 並び順 ("desc"=新しい順, "asc"=古い順, "manual"=手動)
   const [sortOrder, setSortOrder] = useState("desc");
   
-  // ★追加: タグ入力用の状態 (addtags由来)
+  // タグ入力用の状態
   const [inputTags, setInputTags] = useState([]);
 
-  // ドラッグ操作のセンサー設定（main由来）
+  // ドラッグ操作のセンサー設定
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -86,18 +87,18 @@ function App() {
     let newMemos;
 
     if (editingId) {
-      // 編集時: タグ情報(inputTags)も更新 (addtags由来)
+      // 編集時
       newMemos = memos.map((memo) =>
         memo.id === editingId ? { ...memo, text, tags: inputTags, updatedAt: now } : memo
       );
       setEditingId(null);
     } else {
-      // 新規作成時: タグ情報(inputTags)を追加 (addtags由来)
+      // 新規作成時
       const newMemo = {
         id: Date.now(),
         url: currentUrl,
         text,
-        tags: inputTags, // ★タグ保存
+        tags: inputTags,
         createdAt: now,
         updatedAt: now,
         liked: false,
@@ -107,7 +108,6 @@ function App() {
         memoColor: "#fff8b0",
         isCanvas: false,
       };
-      // 並び順のロジック (main由来)
       if (sortOrder === "asc") {
         newMemos = [...memos, newMemo];
       } else {
@@ -116,11 +116,9 @@ function App() {
     }
     updateMemos(newMemos);
     setInputText("");
-    setInputTags([]); // ★タグ入力をリセット (addtags由来)
+    setInputTags([]);
   };
 
-  // ★ドラッグ終了時の処理 (main由来のロジックを採用)
-  // 理由: ドラッグ時に「手動モード」に切り替える処理が必要だから
   const handleDragEnd = (event) => {
     const { active, over } = event;
 
@@ -131,7 +129,6 @@ function App() {
       const newMemos = arrayMove(memos, oldIndex, newIndex);
       updateMemos(newMemos);
 
-      // ドラッグしたら自動的に「手動」モードに切り替えて、次回の勝手なソートを防ぐ
       if (sortOrder !== "manual") {
         setSortOrder("manual");
         if (typeof chrome !== "undefined" && chrome.storage) {
@@ -210,7 +207,7 @@ function App() {
       id: Date.now(),
       url: currentUrl,
       text: "",
-      tags: [], // ★タグ初期化 (addtags由来)
+      tags: [],
       createdAt: now,
       updatedAt: now,
       liked: false,
@@ -238,20 +235,20 @@ function App() {
     updateMemos(memos.filter((m) => m.id !== id));
     if (editingId === id) {
       setInputText("");
-      setInputTags([]); // ★リセット (addtags由来)
+      setInputTags([]);
       setEditingId(null);
     }
   };
 
   const handleEdit = (memo) => {
     setInputText(memo.text);
-    setInputTags(memo.tags || []); // ★既存のタグをセット (addtags由来)
+    setInputTags(memo.tags || []);
     setEditingId(memo.id);
   };
 
   const handleCancel = () => {
     setInputText("");
-    setInputTags([]); // ★リセット (addtags由来)
+    setInputTags([]);
     setEditingId(null);
   };
 
@@ -273,22 +270,39 @@ function App() {
       <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
         <button onClick={() => setViewMode("local")} style={{ flex: 1, background: viewMode === "local" ? "#ddd" : "" }}>ローカル</button>
         <button onClick={() => setViewMode("remote")} style={{ flex: 1, background: viewMode === "remote" ? "#ddd" : "" }}>リモート</button>
+        {/* ★追加: 検索ボタン */}
+        <button onClick={() => setViewMode("search")} style={{ flex: 1, background: viewMode === "search" ? "#ddd" : "" }}>検索</button>
         <button onClick={() => setViewMode("mypage")} style={{ flex: 1, background: viewMode === "mypage" ? "#ddd" : "" }}>マイページ</button>
       </div>
 
-      <div style={{ fontSize: "12px", color: "#666", marginBottom: "10px", wordBreak: "break-all" }}>
-        Current: {currentUrl}
-      </div>
+      {viewMode !== "search" && (
+        <div style={{ fontSize: "12px", color: "#666", marginBottom: "10px", wordBreak: "break-all" }}>
+          Current: {currentUrl}
+        </div>
+      )}
 
+      {/* 画面切り替えロジック */}
       {viewMode === "mypage" ? (
         <MyPage onBack={() => setViewMode("local")} memos={memos} />
+      ) : viewMode === "search" ? (
+        // ★追加: 検索画面
+        <SearchMemo
+          memos={memos}
+          formatTimestamp={formatTimestamp}
+          handleEdit={(memo) => {
+            handleEdit(memo);
+            setViewMode("local"); // 編集時はローカルタブへ移動して入力欄を表示
+          }}
+          pasteMemo={pasteMemo}
+          changeColor={changeColor}
+          deleteMemo={deleteMemo}
+        />
       ) : (
         <>
           {viewMode === "local" && (
             <MemoInput
               inputText={inputText}
               setInputText={setInputText}
-              // ★タグ用のPropsを追加 (addtags由来)
               inputTags={inputTags}
               setInputTags={setInputTags}
               editingId={editingId}
@@ -310,6 +324,7 @@ function App() {
             </div>
           )}
 
+          {/* ローカルとリモート時のみソートとリストを表示 */}
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "8px" }}>
             <select value={sortOrder} onChange={handleSortChange} style={{ padding: "4px", fontSize: "12px" }}>
               <option value="desc">▼ 新しい順</option>

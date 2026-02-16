@@ -17,6 +17,21 @@ function SortableItem({ memo, viewMode, formatTimestamp, handleEdit, pasteMemo, 
     isDragging,
   } = useSortable({ id: memo.id });
 
+  // ★追加: アイテムクリック時の処理
+  const handleItemClick = (e) => {
+    // 検索モード以外は何もしない
+    if (viewMode !== "search") return;
+    
+    // ボタンや入力フォーム、SVGアイコンのクリックならURL遷移しない
+    const tagName = e.target.tagName.toUpperCase();
+    if (['BUTTON', 'INPUT', 'SVG', 'PATH'].includes(tagName)) return;
+
+    // URLがあれば新しいタブで開く
+    if (memo.url) {
+      window.open(memo.url, '_blank');
+    }
+  };
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -24,17 +39,19 @@ function SortableItem({ memo, viewMode, formatTimestamp, handleEdit, pasteMemo, 
     padding: "8px",
     marginBottom: "8px",
     borderRadius: "4px",
-    backgroundColor: memo.memoColor || "#f9f9f9", // メモの色を反映
+    backgroundColor: memo.memoColor || "#f9f9f9",
     color: "#333",
     display: "flex",
     gap: "8px",
-    opacity: isDragging ? 0.5 : 1, // ドラッグ中は半透明にする
+    opacity: isDragging ? 0.5 : 1,
     position: 'relative',
-    touchAction: 'none', // スマホでの誤操作防止
+    touchAction: 'none',
+    // ★追加: 検索モードのときはカーソルを指にする
+    cursor: viewMode === "search" ? "pointer" : "default",
   };
 
   return (
-    <li ref={setNodeRef} style={style}>
+    <li ref={setNodeRef} style={style} onClick={handleItemClick}>
       {/* ▼ 三本線（ドラッグハンドル） - main由来 */}
       {viewMode === "local" && (
         <div
