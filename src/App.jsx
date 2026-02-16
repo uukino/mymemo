@@ -33,8 +33,11 @@ function App() {
   const [shareError, setShareError] = useState("");
   // 並び順 ("desc"=新しい順, "asc"=古い順, "manual"=手動)
   const [sortOrder, setSortOrder] = useState("desc");
+  
+  // ★追加: タグ入力用の状態 (addtags由来)
+  const [inputTags, setInputTags] = useState([]);
 
-  // ドラッグ操作のセンサー設定（マウスとタッチ対応）
+  // ドラッグ操作のセンサー設定（main由来）
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -83,15 +86,18 @@ function App() {
     let newMemos;
 
     if (editingId) {
+      // 編集時: タグ情報(inputTags)も更新 (addtags由来)
       newMemos = memos.map((memo) =>
-        memo.id === editingId ? { ...memo, text, updatedAt: now } : memo
+        memo.id === editingId ? { ...memo, text, tags: inputTags, updatedAt: now } : memo
       );
       setEditingId(null);
     } else {
+      // 新規作成時: タグ情報(inputTags)を追加 (addtags由来)
       const newMemo = {
         id: Date.now(),
         url: currentUrl,
         text,
+        tags: inputTags, // ★タグ保存
         createdAt: now,
         updatedAt: now,
         liked: false,
@@ -101,7 +107,7 @@ function App() {
         memoColor: "#fff8b0",
         isCanvas: false,
       };
-      // "asc"（古い順）の時だけ末尾に追加、それ以外（desc/manual）は先頭に追加
+      // 並び順のロジック (main由来)
       if (sortOrder === "asc") {
         newMemos = [...memos, newMemo];
       } else {
@@ -110,21 +116,19 @@ function App() {
     }
     updateMemos(newMemos);
     setInputText("");
+    setInputTags([]); // ★タグ入力をリセット (addtags由来)
   };
 
-  // ★ドラッグ終了時の処理
+  // ★ドラッグ終了時の処理 (main由来のロジックを採用)
+  // 理由: ドラッグ時に「手動モード」に切り替える処理が必要だから
   const handleDragEnd = (event) => {
     const { active, over } = event;
 
     if (active.id !== over.id) {
-      // 現在のリスト内でのインデックスを探す
       const oldIndex = memos.findIndex((m) => m.id === active.id);
       const newIndex = memos.findIndex((m) => m.id === over.id);
 
-      // 配列を並び替える
       const newMemos = arrayMove(memos, oldIndex, newIndex);
-      
-      // 保存して反映
       updateMemos(newMemos);
 
       // ドラッグしたら自動的に「手動」モードに切り替えて、次回の勝手なソートを防ぐ
@@ -137,7 +141,6 @@ function App() {
     }
   };
 
-  // ソート機能
   const handleSortChange = (e) => {
     const order = e.target.value;
     setSortOrder(order);
@@ -155,8 +158,7 @@ function App() {
     }
   };
 
-  // その他のヘルパー関数
-  const shareMemo = async () => { /* ...省略せずにそのまま... */
+  const shareMemo = async () => {
     const trimmed = inputText.trim();
     const fallbackMemo = memos.filter((memo) => memo.url === currentUrl).at(0);
     const text = trimmed || fallbackMemo?.text || "";
@@ -208,6 +210,7 @@ function App() {
       id: Date.now(),
       url: currentUrl,
       text: "",
+      tags: [], // ★タグ初期化 (addtags由来)
       createdAt: now,
       updatedAt: now,
       liked: false,
@@ -235,17 +238,20 @@ function App() {
     updateMemos(memos.filter((m) => m.id !== id));
     if (editingId === id) {
       setInputText("");
+      setInputTags([]); // ★リセット (addtags由来)
       setEditingId(null);
     }
   };
 
   const handleEdit = (memo) => {
     setInputText(memo.text);
+    setInputTags(memo.tags || []); // ★既存のタグをセット (addtags由来)
     setEditingId(memo.id);
   };
 
   const handleCancel = () => {
     setInputText("");
+    setInputTags([]); // ★リセット (addtags由来)
     setEditingId(null);
   };
 
@@ -282,6 +288,9 @@ function App() {
             <MemoInput
               inputText={inputText}
               setInputText={setInputText}
+              // ★タグ用のPropsを追加 (addtags由来)
+              inputTags={inputTags}
+              setInputTags={setInputTags}
               editingId={editingId}
               saveMemo={saveMemo}
               shareMemo={shareMemo}
@@ -309,7 +318,6 @@ function App() {
             </select>
           </div>
 
-          {/* ▼ ドラッグアンドドロップのコンテキストでリストを囲む */}
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}

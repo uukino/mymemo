@@ -35,7 +35,7 @@ function SortableItem({ memo, viewMode, formatTimestamp, handleEdit, pasteMemo, 
 
   return (
     <li ref={setNodeRef} style={style}>
-      {/* ▼ 三本線（ドラッグハンドル） */}
+      {/* ▼ 三本線（ドラッグハンドル） - main由来 */}
       {viewMode === "local" && (
         <div
           {...attributes}
@@ -56,6 +56,27 @@ function SortableItem({ memo, viewMode, formatTimestamp, handleEdit, pasteMemo, 
 
       {/* メモの中身エリア（幅いっぱい使う） */}
       <div style={{ flex: 1, overflow: "hidden" }}>
+        
+        {/* ★タグ表示エリア - addtags由来 */}
+        {memo.tags && memo.tags.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "4px" }}>
+            {memo.tags.map((tag) => (
+              <span
+                key={tag}
+                style={{
+                  fontSize: "10px",
+                  backgroundColor: "rgba(0,0,0,0.05)",
+                  padding: "1px 5px",
+                  borderRadius: "8px",
+                  color: "#555"
+                }}
+              >
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )}
+
         <div style={{ whiteSpace: "pre-wrap", marginBottom: "4px" }}>
           {memo.text}
         </div>
