@@ -26,6 +26,8 @@ const MemoUpdate=(allMemos)=>{
             position: 'absolute',
             top: `${memo.y??(120 + i * 80)}px`,
             left: `${memo.x??120}px`,
+            width:`${memo.width??100}px`,
+            height:`${memo.height??50}px`,
             background: `${memo.memoColor||"#fff8b0"}`,
             padding: '8px',
             border: '1px solid #ccc',
@@ -35,6 +37,7 @@ const MemoUpdate=(allMemos)=>{
             whiteSpace: 'pre-wrap',
             resize: 'both',
             overflow: 'auto',
+            boxSizing:'border-box',
         });
         div.className='page-memo';
         Object.assign(header.style,{
@@ -52,6 +55,23 @@ const MemoUpdate=(allMemos)=>{
         textarea.addEventListener('change',()=>{
             memo.text=textarea.value;
             chrome.storage.local.get(['memos'], res => {
+        const memos = res.memos || [];
+        const idx = memos.findIndex(m => m.id === memo.id);
+        if (idx !== -1) {
+            memos[idx] = memo;
+            chrome.storage.local.set({ memos });
+        }
+    });
+        });
+        div.appendChild(header);
+        div.appendChild(textarea);
+        MemoDrag(header,div,memo);
+        document.body.appendChild(div);
+        div.addEventListener('mouseup', () => {
+            memo.width = div.offsetWidth;
+            memo.height = div.offsetHeight;
+
+            chrome.storage.local.get(['memos'], res => {
                 const memos = res.memos || [];
                 const idx = memos.findIndex(m => m.id === memo.id);
                 if (idx !== -1) {
@@ -59,11 +79,7 @@ const MemoUpdate=(allMemos)=>{
                     chrome.storage.local.set({ memos });
                 }
             });
-        })
-        div.appendChild(header);
-        div.appendChild(textarea);
-        MemoDrag(header,div,memo);
-        document.body.appendChild(div);
+        });
     });
 };
 
