@@ -25,6 +25,21 @@ function SortableItem({
     isDragging,
   } = useSortable({ id: memo.id });
 
+  // ★追加: アイテムクリック時の処理
+  const handleItemClick = (e) => {
+    // 検索モード以外は何もしない
+    if (viewMode !== "search") return;
+    
+    // ボタンや入力フォーム、SVGアイコンのクリックならURL遷移しない
+    const tagName = e.target.tagName.toUpperCase();
+    if (['BUTTON', 'INPUT', 'SVG', 'PATH'].includes(tagName)) return;
+
+    // URLがあれば新しいタブで開く
+    if (memo.url) {
+      window.open(memo.url, '_blank');
+    }
+  };
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -32,18 +47,21 @@ function SortableItem({
     padding: "8px",
     marginBottom: "8px",
     borderRadius: "4px",
-    backgroundColor: memo.memoColor || "#f9f9f9", // メモの色を反映
+    backgroundColor: memo.memoColor || "#f9f9f9",
     color: "#333",
     display: "flex",
     gap: "8px",
-    opacity: isDragging ? 0.5 : 1, // ドラッグ中は半透明にする
-    position: "relative",
-    touchAction: "none", // スマホでの誤操作防止
+
+    opacity: isDragging ? 0.5 : 1,
+    position: 'relative',
+    touchAction: 'none',
+    // ★追加: 検索モードのときはカーソルを指にする
+    cursor: viewMode === "search" ? "pointer" : "default",
   };
 
   return (
-    <li ref={setNodeRef} style={style}>
-      {/* ▼ 三本線（ドラッグハンドル） */}
+    <li ref={setNodeRef} style={style} onClick={handleItemClick}>
+      {/* ▼ 三本線（ドラッグハンドル） - main由来 */}
       {viewMode === "local" && (
         <div
           {...attributes}
@@ -64,6 +82,27 @@ function SortableItem({
 
       {/* メモの中身エリア（幅いっぱい使う） */}
       <div style={{ flex: 1, overflow: "hidden" }}>
+        
+        {/* ★タグ表示エリア - addtags由来 */}
+        {memo.tags && memo.tags.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "4px" }}>
+            {memo.tags.map((tag) => (
+              <span
+                key={tag}
+                style={{
+                  fontSize: "10px",
+                  backgroundColor: "rgba(0,0,0,0.05)",
+                  padding: "1px 5px",
+                  borderRadius: "8px",
+                  color: "#555"
+                }}
+              >
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )}
+
         <div style={{ whiteSpace: "pre-wrap", marginBottom: "4px" }}>
           {memo.text}
         </div>
