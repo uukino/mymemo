@@ -20,19 +20,8 @@ const MemoUpdate=(allMemos)=>{
         }
         if(!memo.pasted)return;
         const div = document.createElement('div');
-        const goodButton=document.createElement('button');
-        goodButton.textContent='👍'+(memo.good||0);
-        goodButton.onclick=()=>{
-            memo.liked=memo.liked?false:true;
-            memo.good=memo.good<0?0:memo.good||0;//goodの初期化,負の値防止
-            console.log(memo.liked);
-            memo.good += memo.liked ? 1 : -1;
-            chrome.storage.local.set({memos:allMemos});
-            console.log(memo.good);
-        }
-        goodButton.style.marginRight='4px';
-        div.textContent = memo.text;
-        div.className='page-memo';
+        const header=document.createElement('div');
+        const textarea=document.createElement('textarea');
         Object.assign(div.style, {
             position: 'absolute',
             top: `${memo.y??(120 + i * 80)}px`,
@@ -41,54 +30,71 @@ const MemoUpdate=(allMemos)=>{
             padding: '8px',
             border: '1px solid #ccc',
             borderRadius: '4px',
-            zIndex: 999999,
+            zIndex: 999998,
             display: memo.hidden ? 'none' : 'block',
             whiteSpace: 'pre-wrap',
+            resize: 'both',
+            overflow: 'auto',
         });
-        Object.assign(goodButton.style,{
-            background: memo.liked?'#9b9898':'none',
-            border:'1px solid #ccc',
-            borderRadius:'10px',
-            cursor:'pointer',
+        div.className='page-memo';
+        Object.assign(header.style,{
+            height:'20px',
+            display:'flex',
+            background:`${memo.memoColor||"#fff8b0"}`,
+            cursor:'grab',
+            alignItems:'center',
+            padding:'0.8px',
         });
-        div.appendChild(goodButton);
-        MemoDrag(div,div,memo);
+        Object.assign(textarea.style,{
+            width:'100%',
+        });
+        textarea.value=memo.text;
+        div.appendChild(header);
+        div.appendChild(textarea);
+        MemoDrag(header,div,memo);
         document.body.appendChild(div);
     });
 };
-const MemoDrag=(el,target,memo)=>{
-    let offsetX=0;
-    let offsetY=0;
-    let isDrag=false;
 
-    el.addEventListener('mousedown',(e)=>{
-        isDrag=true;
-        offsetX=e.clientX-target.offsetLeft;
-        offsetY=e.clientY-target.offsetTop;
-        el.style.cursor='grabbing';
-        e.preventDefault();
-    });
-    document.addEventListener('mousemove',(e)=>{
-        if(!isDrag)return;
-        target.style.left=`${e.clientX-offsetX}px`;
-        target.style.top=`${e.clientY-offsetY}px`;
-    });
-    document.addEventListener('mouseup',()=>{
-        if(!isDrag)return;
-        isDrag=false;
-        target.style.cursor='grab';
-        memo.x=target.offsetLeft;
-        memo.y=target.offsetTop;
-        chrome.storage.local.get(['memos'],res=>{
-            const memos=res.memos||[];
-            const idx=memos.findIndex(m=>m.id===memo.id);
-            if(idx!==-1){
-                memos[idx]=memo;
-                chrome.storage.local.set({memos});
+
+const MemoDrag = (el, target, memo) => {
+    let offsetX = 0;
+    let offsetY = 0;
+
+    const onMouseMove = (e) => {
+        target.style.left = `${e.clientX - offsetX}px`;
+        target.style.top = `${e.clientY - offsetY}px`;
+    };
+
+    const onMouseUp = () => {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+
+        memo.x = target.offsetLeft;
+        memo.y = target.offsetTop;
+
+        chrome.storage.local.get(['memos'], res => {
+            const memos = res.memos || [];
+            const idx = memos.findIndex(m => m.id === memo.id);
+            if (idx !== -1) {
+                memos[idx] = memo;
+                chrome.storage.local.set({ memos });
             }
         });
+    };
+
+    el.addEventListener('mousedown', (e) => {
+        offsetX = e.clientX - target.offsetLeft;
+        offsetY = e.clientY - target.offsetTop;
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+
+        e.preventDefault();
     });
-}
+};
+
+
 const renderCanvas=(memo,i,allMemos)=>{
     const div = document.createElement('div');
     div.className='page-memo';
@@ -101,7 +107,7 @@ const renderCanvas=(memo,i,allMemos)=>{
         background:`${memo.memoColor||"#fff8b0"}`,
         border:'1px solid #ccc',
         borderRadius:'4px',
-        zIndex:999999,
+        zIndex:999997,
         display:memo.hidden?'none':'block',
     });
     const header=document.createElement('div');
@@ -139,6 +145,20 @@ const renderCanvas=(memo,i,allMemos)=>{
     MemoDrag(header,div,memo);
     drawCanvas(canvas,ctx,memo);
     document.body.appendChild(div);
+    div.addEventListener('mouseup',()=>{
+    memo.width = div.offsetWidth;
+    memo.height = div.offsetHeight;
+
+    chrome.storage.local.get(['memos'],res=>{
+        const memos=res.memos||[];
+        const idx=memos.findIndex(m=>m.id===memo.id);
+        if(idx!==-1){
+            memos[idx]=memo;
+            chrome.storage.local.set({memos});
+        }
+    });
+});
+
 }
 
 const drawCanvas=(canvas,ctx,memo)=>{
