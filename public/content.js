@@ -34,16 +34,16 @@ const MemoUpdate=(allMemos)=>{
         div.textContent = memo.text;
         div.className='page-memo';
         Object.assign(div.style, {
-        position: 'absolute',
-        top: `${memo.y??(120 + i * 80)}px`,
-        left: `${memo.x??120}px`,
-        background: `${memo.memoColor||"#fff8b0"}`,
-        padding: '8px',
-        border: '1px solid #ccc',
-        borderRadius: '4px',
-        zIndex: 999999,
-        display: memo.hidden ? 'none' : 'block',
-        whiteSpace: 'pre-wrap',
+            position: 'absolute',
+            top: `${memo.y??(120 + i * 80)}px`,
+            left: `${memo.x??120}px`,
+            background: `${memo.memoColor||"#fff8b0"}`,
+            padding: '8px',
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+            zIndex: 999999,
+            display: memo.hidden ? 'none' : 'block',
+            whiteSpace: 'pre-wrap',
         });
         Object.assign(goodButton.style,{
             background: memo.liked?'#9b9898':'none',
