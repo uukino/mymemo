@@ -7,10 +7,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import {
-  arrayMove,
-  sortableKeyboardCoordinates,
-} from "@dnd-kit/sortable";
+import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 
 import MemoInput from "./MemoInput";
 import MemoList from "./MemoList";
@@ -39,7 +36,7 @@ function App() {
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   useEffect(() => {
@@ -84,7 +81,7 @@ function App() {
 
     if (editingId) {
       newMemos = memos.map((memo) =>
-        memo.id === editingId ? { ...memo, text, updatedAt: now } : memo
+        memo.id === editingId ? { ...memo, text, updatedAt: now } : memo,
       );
       setEditingId(null);
     } else {
@@ -123,7 +120,7 @@ function App() {
 
       // 配列を並び替える
       const newMemos = arrayMove(memos, oldIndex, newIndex);
-      
+
       // 保存して反映
       updateMemos(newMemos);
 
@@ -156,7 +153,8 @@ function App() {
   };
 
   // その他のヘルパー関数
-  const shareMemo = async () => { /* ...省略せずにそのまま... */
+  const shareMemo = async () => {
+    /* ...省略せずにそのまま... */
     const trimmed = inputText.trim();
     const fallbackMemo = memos.filter((memo) => memo.url === currentUrl).at(0);
     const text = trimmed || fallbackMemo?.text || "";
@@ -184,7 +182,9 @@ function App() {
     setRemoteLoading(true);
     setRemoteError("");
     try {
-      const res = await fetch(`${API_BASE}/memos?url=${encodeURIComponent(currentUrl)}`);
+      const res = await fetch(
+        `${API_BASE}/memos?url=${encodeURIComponent(currentUrl)}`,
+      );
       if (!res.ok) throw new Error(res.status);
       const data = await res.json();
       setRemoteMemos(Array.isArray(data) ? data : []);
@@ -249,28 +249,81 @@ function App() {
     setEditingId(null);
   };
 
+  const handleLike = async (memoId) => {
+    try {
+      const res = await fetch(`${API_BASE}/memos/${memoId}/like`, {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error("Failed to like");
+      const data = await res.json();
+      setRemoteMemos((prev) =>
+        prev.map((m) => (m.id === memoId ? { ...m, good: data.good } : m)),
+      );
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const currentPageMemos = memos.filter((memo) => memo.url === currentUrl);
   const currentList = viewMode === "remote" ? remoteMemos : currentPageMemos;
 
   const formatTimestamp = (memo) =>
-    memo.updated_at || memo.updatedAt || memo.created_at || memo.createdAt || "";
+    memo.updated_at ||
+    memo.updatedAt ||
+    memo.created_at ||
+    memo.createdAt ||
+    "";
 
   return (
     <div style={{ width: "300px", padding: "16px", fontFamily: "sans-serif" }}>
-      <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
+      <div
+        style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}
+      >
         <h2>📝 URL Memo</h2>
-        <button onClick={() => filterMemo(memos.find((m) => m.url === currentUrl))}>&times;</button>
-        <button onClick={() => filterMemo(memos.find((m) => m.url === currentUrl && !m.liked))}><span style={{ fontSize: "12px" }}>&times;</span></button>
+        <button
+          onClick={() => filterMemo(memos.find((m) => m.url === currentUrl))}
+        >
+          &times;
+        </button>
+        <button
+          onClick={() =>
+            filterMemo(memos.find((m) => m.url === currentUrl && !m.liked))
+          }
+        >
+          <span style={{ fontSize: "12px" }}>&times;</span>
+        </button>
         <button onClick={makeCanvas}>お絵描き</button>
       </div>
 
       <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
-        <button onClick={() => setViewMode("local")} style={{ flex: 1, background: viewMode === "local" ? "#ddd" : "" }}>ローカル</button>
-        <button onClick={() => setViewMode("remote")} style={{ flex: 1, background: viewMode === "remote" ? "#ddd" : "" }}>リモート</button>
-        <button onClick={() => setViewMode("mypage")} style={{ flex: 1, background: viewMode === "mypage" ? "#ddd" : "" }}>マイページ</button>
+        <button
+          onClick={() => setViewMode("local")}
+          style={{ flex: 1, background: viewMode === "local" ? "#ddd" : "" }}
+        >
+          ローカル
+        </button>
+        <button
+          onClick={() => setViewMode("remote")}
+          style={{ flex: 1, background: viewMode === "remote" ? "#ddd" : "" }}
+        >
+          リモート
+        </button>
+        <button
+          onClick={() => setViewMode("mypage")}
+          style={{ flex: 1, background: viewMode === "mypage" ? "#ddd" : "" }}
+        >
+          マイページ
+        </button>
       </div>
 
-      <div style={{ fontSize: "12px", color: "#666", marginBottom: "10px", wordBreak: "break-all" }}>
+      <div
+        style={{
+          fontSize: "12px",
+          color: "#666",
+          marginBottom: "10px",
+          wordBreak: "break-all",
+        }}
+      >
         Current: {currentUrl}
       </div>
 
@@ -293,16 +346,32 @@ function App() {
 
           {viewMode === "remote" && (
             <div style={{ marginBottom: "16px" }}>
-              <button onClick={fetchRemoteMemos} style={{ width: "100%" }} disabled={remoteLoading}>
+              <button
+                onClick={fetchRemoteMemos}
+                style={{ width: "100%" }}
+                disabled={remoteLoading}
+              >
                 {remoteLoading ? "読み込み中..." : "リモート更新"}
               </button>
               <RemoteSearch apiBase={API_BASE} onResults={setRemoteMemos} />
-              {remoteError && <p style={{ color: "#c00", fontSize: "12px" }}>{remoteError}</p>}
+              {remoteError && (
+                <p style={{ color: "#c00", fontSize: "12px" }}>{remoteError}</p>
+              )}
             </div>
           )}
 
-          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "8px" }}>
-            <select value={sortOrder} onChange={handleSortChange} style={{ padding: "4px", fontSize: "12px" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              marginBottom: "8px",
+            }}
+          >
+            <select
+              value={sortOrder}
+              onChange={handleSortChange}
+              style={{ padding: "4px", fontSize: "12px" }}
+            >
               <option value="desc">▼ 新しい順</option>
               <option value="asc">▲ 古い順</option>
               <option value="manual">≡ 手動(ドラッグ)</option>
@@ -323,6 +392,7 @@ function App() {
               pasteMemo={pasteMemo}
               changeColor={changeColor}
               deleteMemo={deleteMemo}
+              handleLike={handleLike}
             />
           </DndContext>
         </>

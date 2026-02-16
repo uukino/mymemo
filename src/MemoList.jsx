@@ -1,13 +1,21 @@
-import React from 'react';
+import React from "react";
 import {
   SortableContext,
   useSortable,
   verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 // 個別のメモ（ドラッグ可能な行）コンポーネント
-function SortableItem({ memo, viewMode, formatTimestamp, handleEdit, pasteMemo, changeColor, deleteMemo }) {
+function SortableItem({
+  memo,
+  viewMode,
+  formatTimestamp,
+  handleEdit,
+  pasteMemo,
+  changeColor,
+  deleteMemo,
+}) {
   const {
     attributes,
     listeners,
@@ -29,8 +37,8 @@ function SortableItem({ memo, viewMode, formatTimestamp, handleEdit, pasteMemo, 
     display: "flex",
     gap: "8px",
     opacity: isDragging ? 0.5 : 1, // ドラッグ中は半透明にする
-    position: 'relative',
-    touchAction: 'none', // スマホでの誤操作防止
+    position: "relative",
+    touchAction: "none", // スマホでの誤操作防止
   };
 
   return (
@@ -59,7 +67,7 @@ function SortableItem({ memo, viewMode, formatTimestamp, handleEdit, pasteMemo, 
         <div style={{ whiteSpace: "pre-wrap", marginBottom: "4px" }}>
           {memo.text}
         </div>
-        
+
         <div
           style={{
             display: "flex",
@@ -81,7 +89,12 @@ function SortableItem({ memo, viewMode, formatTimestamp, handleEdit, pasteMemo, 
                 type="color"
                 value={memo.memoColor || "#fff8b0"}
                 onChange={(e) => changeColor(memo, e)}
-                style={{ width: "20px", height: "20px", border: "none", padding: 0 }}
+                style={{
+                  width: "20px",
+                  height: "20px",
+                  border: "none",
+                  padding: 0,
+                }}
               />
               <button
                 onClick={() => pasteMemo(memo)}
@@ -112,6 +125,48 @@ function SortableItem({ memo, viewMode, formatTimestamp, handleEdit, pasteMemo, 
             </div>
           )}
         </div>
+
+        {viewMode === "remote" && (
+          <div
+            style={{
+              fontSize: "10px",
+              color: "#666",
+              wordBreak: "break-all",
+              display: "flex",
+              flexDirection: "column",
+              gap: "2px",
+            }}
+          >
+            <div>🔗 {memo.url}</div>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <span>🕒 {formatTimestamp(memo)}</span>
+              {viewMode === "remote" && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleLike && handleLike(memo.id);
+                  }}
+                  style={{
+                    padding: "2px 6px",
+                    fontSize: "10px",
+                    cursor: "pointer",
+                    backgroundColor: "#fff",
+                    border: "1px solid #ddd",
+                    borderRadius: "4px",
+                  }}
+                >
+                  👍 {memo.good || 0}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </li>
   );
@@ -126,6 +181,7 @@ function MemoList({
   pasteMemo,
   changeColor,
   deleteMemo,
+  handleLike, // 追加
 }) {
   return (
     <div>
