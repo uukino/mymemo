@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import MemoInput from "./MemoInput";
 import MemoList from "./MemoList";
 
+import MyPage from "./MyPage";
+import RemoteSearch from "./RemoteSearch";
+
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
 const PUBLIC_USER_ID = import.meta.env.VITE_PUBLIC_USER_ID || "";
 
@@ -183,14 +186,14 @@ function App() {
     chrome.storage.local.set({memos:newMemos});
     setMemos(newMemos);
     console.log(newMemos);
-  }
-  const pasteMemo=(memo)=>{
-    memo.pasted=memo.pasted?false:true;
-    const newMemos=memos.map(m=>m.id===memo.id?memo:m);
-    chrome.storage.local.set({memos:newMemos});
+  };
+  const pasteMemo = (memo) => {
+    memo.pasted = memo.pasted ? false : true;
+    const newMemos = memos.map((m) => (m.id === memo.id ? memo : m));
+    chrome.storage.local.set({ memos: newMemos });
     setMemos(newMemos);
     console.log(newMemos);
-  }
+  };
 
   // メモを削除する関数
   const deleteMemo = (id) => {
@@ -231,9 +234,15 @@ function App() {
     "";
 
   return (
-    <div style={{ width: "300px", padding: "16px", fontFamily: "sans-serif" }}>
+    <div
+      style={{ width: "300px", padding: "16px", fontFamily: "sans-serif" }}
+    >
       <div
-        style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          marginBottom: "12px",
+        }}
       >
         <h2>📝 URL Memo</h2>
         <button onClick={()=>filterMemo(memos.find(m=>m.url===currentUrl))}>
@@ -258,6 +267,12 @@ function App() {
         >
           リモート
         </button>
+        <button
+          onClick={() => setViewMode("mypage")}
+          style={{ flex: 1, background: viewMode === "mypage" ? "#ddd" : "" }}
+        >
+          マイページ
+        </button>
       </div>
 
       <div
@@ -271,43 +286,50 @@ function App() {
         Current: {currentUrl}
       </div>
 
-      {viewMode === "local" && (
-        <MemoInput
-          inputText={inputText}
-          setInputText={setInputText}
-          editingId={editingId}
-          saveMemo={saveMemo}
-          shareMemo={shareMemo}
-          handleCancel={handleCancel}
-          shareMessage={shareMessage}
-          shareError={shareError}
-        />
-      )}
-
-      {viewMode === "remote" && (
-        <div style={{ marginBottom: "16px" }}>
-          <button
-            onClick={fetchRemoteMemos}
-            style={{ width: "100%" }}
-            disabled={remoteLoading}
-          >
-            {remoteLoading ? "読み込み中..." : "リモート更新"}
-          </button>
-          {remoteError && (
-            <p style={{ color: "#c00", fontSize: "12px" }}>{remoteError}</p>
+      {viewMode === "mypage" ? (
+        <MyPage onBack={() => setViewMode("local")} memos={memos} />
+      ) : (
+        /* ▼ ここからが viewMode !== 'mypage' のときの中身 ▼ */
+        <>
+          {viewMode === "local" && (
+            <MemoInput
+              inputText={inputText}
+              setInputText={setInputText}
+              editingId={editingId}
+              saveMemo={saveMemo}
+              shareMemo={shareMemo}
+              handleCancel={handleCancel}
+              shareMessage={shareMessage}
+              shareError={shareError}
+            />
           )}
-        </div>
-      )}
+          {viewMode === "remote" && (
+          <div style={{ marginBottom: "16px" }}>
+            <button
+              onClick={fetchRemoteMemos}
+              style={{ width: "100%" }}
+              disabled={remoteLoading}
+            >
+              {remoteLoading ? "読み込み中..." : "リモート更新"}
+            </button>
 
-      <MemoList
-        viewMode={viewMode}
-        currentList={currentList}
-        formatTimestamp={formatTimestamp}
-        handleEdit={handleEdit}
-        pasteMemo={pasteMemo}
-        changeColor={changeColor}
-        deleteMemo={deleteMemo}
-      />
+            <RemoteSearch apiBase={API_BASE} onResults={setRemoteMemos} />
+            {remoteError && (
+              <p style={{ color: "#c00", fontSize: "12px" }}>{remoteError}</p>
+            )}
+          </div>
+        )}
+          <MemoList
+            viewMode={viewMode}
+            currentList={currentList}
+            formatTimestamp={formatTimestamp}
+            handleEdit={handleEdit}
+            pasteMemo={pasteMemo}
+            changeColor={changeColor}
+            deleteMemo={deleteMemo}
+          />
+      </>
+      )}
     </div>
   );
 }
