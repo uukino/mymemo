@@ -42,13 +42,11 @@ app.post("/memos", async (req, res) => {
   res.json(data[0]);
 });
 
-app.listen(process.env.PORT || 3001, () => {
-  console.log("API running");
-});
-
 app.post("/users/register", async (req, res) => {
   const { name, password } = req.body;
-  // Supabaseの`users`テーブルに保存
+  if (!name || !password) {
+    return res.status(400).json({ message: "name and password are required" });
+  }
   const { data, error } = await supabase
     .from("users")
     .insert({ name, password })
@@ -60,6 +58,9 @@ app.post("/users/register", async (req, res) => {
 
 app.post("/users/login", async (req, res) => {
   const { name, password } = req.body;
+  if (!name || !password) {
+    return res.status(400).json({ message: "name and password are required" });
+  }
   const { data, error } = await supabase
     .from("users")
     .select("id, name")
@@ -69,4 +70,12 @@ app.post("/users/login", async (req, res) => {
   if (error || !data)
     return res.status(401).json({ message: "Invalid credentials" });
   res.json({ id: data.id, name: data.name });
+});
+
+app.get("/health", (_req, res) => {
+  res.json({ ok: true });
+});
+
+app.listen(process.env.PORT || 3001, () => {
+  console.log("API running");
 });
