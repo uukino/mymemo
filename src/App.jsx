@@ -126,6 +126,7 @@ function App() {
       const newIndex = memos.findIndex((m) => m.id === over.id);
 
       const newMemos = arrayMove(memos, oldIndex, newIndex);
+
       updateMemos(newMemos);
 
       if (sortOrder !== "manual") {
@@ -154,7 +155,10 @@ function App() {
     }
   };
 
+  // その他のヘルパー関数
   const shareMemo = async () => {
+    /* ...省略せずにそのまま... */
+
     const trimmed = inputText.trim();
     const fallbackMemo = memos.filter((memo) => memo.url === currentUrl).at(0);
     const text = trimmed || fallbackMemo?.text || "";

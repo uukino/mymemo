@@ -72,7 +72,6 @@ app.post("/users/login", async (req, res) => {
   res.json({ id: data.id, name: data.name });
 });
 
-// 追加: いいね更新
 app.post("/memos/:id/like", async (req, res) => {
   const { id } = req.params;
   const { data, error } = await supabase

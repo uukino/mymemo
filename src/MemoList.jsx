@@ -51,6 +51,7 @@ function SortableItem({
     color: "#333",
     display: "flex",
     gap: "8px",
+
     opacity: isDragging ? 0.5 : 1,
     position: "relative",
     touchAction: "none",
@@ -225,7 +226,6 @@ function MemoList({
   pasteMemo,
   changeColor,
   deleteMemo,
-  handleLike,
 }) {
   return (
     <div>
