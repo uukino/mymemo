@@ -34,10 +34,10 @@ function App() {
   // 並び順 ("desc"=新しい順, "asc"=古い順, "manual"=手動)
   const [sortOrder, setSortOrder] = useState("desc");
   
-  // ★追加: タグ入力用の状態
+  // ★追加: タグ入力用の状態 (addtags由来)
   const [inputTags, setInputTags] = useState([]);
 
-  // ドラッグ操作のセンサー設定
+  // ドラッグ操作のセンサー設定（main由来）
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -86,13 +86,13 @@ function App() {
     let newMemos;
 
     if (editingId) {
-      // 編集時: タグ情報(inputTags)も更新
+      // 編集時: タグ情報(inputTags)も更新 (addtags由来)
       newMemos = memos.map((memo) =>
         memo.id === editingId ? { ...memo, text, tags: inputTags, updatedAt: now } : memo
       );
       setEditingId(null);
     } else {
-      // 新規作成時: タグ情報(inputTags)を追加
+      // 新規作成時: タグ情報(inputTags)を追加 (addtags由来)
       const newMemo = {
         id: Date.now(),
         url: currentUrl,
@@ -107,6 +107,7 @@ function App() {
         memoColor: "#fff8b0",
         isCanvas: false,
       };
+      // 並び順のロジック (main由来)
       if (sortOrder === "asc") {
         newMemos = [...memos, newMemo];
       } else {
@@ -115,18 +116,22 @@ function App() {
     }
     updateMemos(newMemos);
     setInputText("");
-    setInputTags([]); // ★タグ入力をリセット
+    setInputTags([]); // ★タグ入力をリセット (addtags由来)
   };
 
+  // ★ドラッグ終了時の処理 (main由来のロジックを採用)
+  // 理由: ドラッグ時に「手動モード」に切り替える処理が必要だから
   const handleDragEnd = (event) => {
     const { active, over } = event;
 
     if (active.id !== over.id) {
       const oldIndex = memos.findIndex((m) => m.id === active.id);
       const newIndex = memos.findIndex((m) => m.id === over.id);
+
       const newMemos = arrayMove(memos, oldIndex, newIndex);
       updateMemos(newMemos);
 
+      // ドラッグしたら自動的に「手動」モードに切り替えて、次回の勝手なソートを防ぐ
       if (sortOrder !== "manual") {
         setSortOrder("manual");
         if (typeof chrome !== "undefined" && chrome.storage) {
@@ -205,7 +210,7 @@ function App() {
       id: Date.now(),
       url: currentUrl,
       text: "",
-      tags: [],
+      tags: [], // ★タグ初期化 (addtags由来)
       createdAt: now,
       updatedAt: now,
       liked: false,
@@ -233,20 +238,20 @@ function App() {
     updateMemos(memos.filter((m) => m.id !== id));
     if (editingId === id) {
       setInputText("");
-      setInputTags([]); // ★リセット
+      setInputTags([]); // ★リセット (addtags由来)
       setEditingId(null);
     }
   };
 
   const handleEdit = (memo) => {
     setInputText(memo.text);
-    setInputTags(memo.tags || []); // ★既存のタグをセット
+    setInputTags(memo.tags || []); // ★既存のタグをセット (addtags由来)
     setEditingId(memo.id);
   };
 
   const handleCancel = () => {
     setInputText("");
-    setInputTags([]); // ★リセット
+    setInputTags([]); // ★リセット (addtags由来)
     setEditingId(null);
   };
 
@@ -283,7 +288,7 @@ function App() {
             <MemoInput
               inputText={inputText}
               setInputText={setInputText}
-              // ★タグ用のPropsを追加
+              // ★タグ用のPropsを追加 (addtags由来)
               inputTags={inputTags}
               setInputTags={setInputTags}
               editingId={editingId}

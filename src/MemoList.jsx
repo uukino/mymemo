@@ -6,6 +6,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
+// 個別のメモ（ドラッグ可能な行）コンポーネント
 function SortableItem({ memo, viewMode, formatTimestamp, handleEdit, pasteMemo, changeColor, deleteMemo }) {
   const {
     attributes,
@@ -23,17 +24,18 @@ function SortableItem({ memo, viewMode, formatTimestamp, handleEdit, pasteMemo, 
     padding: "8px",
     marginBottom: "8px",
     borderRadius: "4px",
-    backgroundColor: memo.memoColor || "#f9f9f9",
+    backgroundColor: memo.memoColor || "#f9f9f9", // メモの色を反映
     color: "#333",
     display: "flex",
     gap: "8px",
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.5 : 1, // ドラッグ中は半透明にする
     position: 'relative',
-    touchAction: 'none',
+    touchAction: 'none', // スマホでの誤操作防止
   };
 
   return (
     <li ref={setNodeRef} style={style}>
+      {/* ▼ 三本線（ドラッグハンドル） - main由来 */}
       {viewMode === "local" && (
         <div
           {...attributes}
@@ -52,8 +54,10 @@ function SortableItem({ memo, viewMode, formatTimestamp, handleEdit, pasteMemo, 
         </div>
       )}
 
+      {/* メモの中身エリア（幅いっぱい使う） */}
       <div style={{ flex: 1, overflow: "hidden" }}>
-        {/* ★タグ表示エリア */}
+        
+        {/* ★タグ表示エリア - addtags由来 */}
         {memo.tags && memo.tags.length > 0 && (
           <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "4px" }}>
             {memo.tags.map((tag) => (
@@ -134,6 +138,7 @@ function SortableItem({ memo, viewMode, formatTimestamp, handleEdit, pasteMemo, 
   );
 }
 
+// メインのリストコンポーネント
 function MemoList({
   viewMode,
   currentList,
@@ -148,6 +153,7 @@ function MemoList({
       <hr />
       <h3>このページのメモ一覧 ({currentList.length})</h3>
 
+      {/* ソート可能なリストのコンテキスト */}
       <ul style={{ listStyle: "none", padding: 0 }}>
         <SortableContext
           items={currentList.map((memo) => memo.id)}
