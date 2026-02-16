@@ -1,13 +1,21 @@
-import React from 'react';
+import React from "react";
 import {
   SortableContext,
   useSortable,
   verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 // 個別のメモ（ドラッグ可能な行）コンポーネント
-function SortableItem({ memo, viewMode, formatTimestamp, handleEdit, pasteMemo, changeColor, deleteMemo }) {
+function SortableItem({
+  memo,
+  viewMode,
+  formatTimestamp,
+  handleEdit,
+  pasteMemo,
+  changeColor,
+  deleteMemo,
+}) {
   const {
     attributes,
     listeners,
@@ -21,14 +29,14 @@ function SortableItem({ memo, viewMode, formatTimestamp, handleEdit, pasteMemo, 
   const handleItemClick = (e) => {
     // 検索モード以外は何もしない
     if (viewMode !== "search") return;
-    
+
     // ボタンや入力フォーム、SVGアイコンのクリックならURL遷移しない
     const tagName = e.target.tagName.toUpperCase();
-    if (['BUTTON', 'INPUT', 'SVG', 'PATH'].includes(tagName)) return;
+    if (["BUTTON", "INPUT", "SVG", "PATH"].includes(tagName)) return;
 
     // URLがあれば新しいタブで開く
     if (memo.url) {
-      window.open(memo.url, '_blank');
+      window.open(memo.url, "_blank");
     }
   };
 
@@ -44,8 +52,8 @@ function SortableItem({ memo, viewMode, formatTimestamp, handleEdit, pasteMemo, 
     display: "flex",
     gap: "8px",
     opacity: isDragging ? 0.5 : 1,
-    position: 'relative',
-    touchAction: 'none',
+    position: "relative",
+    touchAction: "none",
     // ★追加: 検索モードのときはカーソルを指にする
     cursor: viewMode === "search" ? "pointer" : "default",
   };
@@ -73,10 +81,16 @@ function SortableItem({ memo, viewMode, formatTimestamp, handleEdit, pasteMemo, 
 
       {/* メモの中身エリア（幅いっぱい使う） */}
       <div style={{ flex: 1, overflow: "hidden" }}>
-        
         {/* ★タグ表示エリア - addtags由来 */}
         {memo.tags && memo.tags.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "4px" }}>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "4px",
+              marginBottom: "4px",
+            }}
+          >
             {memo.tags.map((tag) => (
               <span
                 key={tag}
@@ -85,7 +99,7 @@ function SortableItem({ memo, viewMode, formatTimestamp, handleEdit, pasteMemo, 
                   backgroundColor: "rgba(0,0,0,0.05)",
                   padding: "1px 5px",
                   borderRadius: "8px",
-                  color: "#555"
+                  color: "#555",
                 }}
               >
                 #{tag}
@@ -97,7 +111,7 @@ function SortableItem({ memo, viewMode, formatTimestamp, handleEdit, pasteMemo, 
         <div style={{ whiteSpace: "pre-wrap", marginBottom: "4px" }}>
           {memo.text}
         </div>
-        
+
         <div
           style={{
             display: "flex",
@@ -119,7 +133,12 @@ function SortableItem({ memo, viewMode, formatTimestamp, handleEdit, pasteMemo, 
                 type="color"
                 value={memo.memoColor || "#fff8b0"}
                 onChange={(e) => changeColor(memo, e)}
-                style={{ width: "20px", height: "20px", border: "none", padding: 0 }}
+                style={{
+                  width: "20px",
+                  height: "20px",
+                  border: "none",
+                  padding: 0,
+                }}
               />
               <button
                 onClick={() => pasteMemo(memo)}
@@ -150,6 +169,48 @@ function SortableItem({ memo, viewMode, formatTimestamp, handleEdit, pasteMemo, 
             </div>
           )}
         </div>
+
+        {viewMode === "remote" && (
+          <div
+            style={{
+              fontSize: "10px",
+              color: "#666",
+              wordBreak: "break-all",
+              display: "flex",
+              flexDirection: "column",
+              gap: "2px",
+            }}
+          >
+            <div>🔗 {memo.url}</div>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <span>🕒 {formatTimestamp(memo)}</span>
+              {viewMode === "remote" && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleLike && handleLike(memo.id);
+                  }}
+                  style={{
+                    padding: "2px 6px",
+                    fontSize: "10px",
+                    cursor: "pointer",
+                    backgroundColor: "#fff",
+                    border: "1px solid #ddd",
+                    borderRadius: "4px",
+                  }}
+                >
+                  👍 {memo.good || 0}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </li>
   );
@@ -164,6 +225,7 @@ function MemoList({
   pasteMemo,
   changeColor,
   deleteMemo,
+  handleLike,
 }) {
   return (
     <div>
