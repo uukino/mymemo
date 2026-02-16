@@ -31,7 +31,7 @@ function App() {
   const [shareError, setShareError] = useState("");
   // 並び順 ("desc"=新しい順, "asc"=古い順, "manual"=手動)
   const [sortOrder, setSortOrder] = useState("desc");
-  
+
   // タグ入力用の状態
   const [inputTags, setInputTags] = useState([]);
 
@@ -86,7 +86,9 @@ function App() {
     if (editingId) {
       // 編集時
       newMemos = memos.map((memo) =>
-        memo.id === editingId ? { ...memo, text, tags: inputTags, updatedAt: now } : memo
+        memo.id === editingId
+          ? { ...memo, text, tags: inputTags, updatedAt: now }
+          : memo,
       );
       setEditingId(null);
     } else {
@@ -251,7 +253,6 @@ function App() {
 
   const handleCancel = () => {
     setInputText("");
-    setInputTags([]);
     setEditingId(null);
   };
 
@@ -302,15 +303,42 @@ function App() {
       </div>
 
       <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
-        <button onClick={() => setViewMode("local")} style={{ flex: 1, background: viewMode === "local" ? "#ddd" : "" }}>ローカル</button>
-        <button onClick={() => setViewMode("remote")} style={{ flex: 1, background: viewMode === "remote" ? "#ddd" : "" }}>リモート</button>
+        <button
+          onClick={() => setViewMode("local")}
+          style={{ flex: 1, background: viewMode === "local" ? "#ddd" : "" }}
+        >
+          ローカル
+        </button>
+        <button
+          onClick={() => setViewMode("remote")}
+          style={{ flex: 1, background: viewMode === "remote" ? "#ddd" : "" }}
+        >
+          リモート
+        </button>
         {/* ★追加: 検索ボタン */}
-        <button onClick={() => setViewMode("search")} style={{ flex: 1, background: viewMode === "search" ? "#ddd" : "" }}>検索</button>
-        <button onClick={() => setViewMode("mypage")} style={{ flex: 1, background: viewMode === "mypage" ? "#ddd" : "" }}>マイページ</button>
+        <button
+          onClick={() => setViewMode("search")}
+          style={{ flex: 1, background: viewMode === "search" ? "#ddd" : "" }}
+        >
+          検索
+        </button>
+        <button
+          onClick={() => setViewMode("mypage")}
+          style={{ flex: 1, background: viewMode === "mypage" ? "#ddd" : "" }}
+        >
+          マイページ
+        </button>
       </div>
 
       {viewMode !== "search" && (
-        <div style={{ fontSize: "12px", color: "#666", marginBottom: "10px", wordBreak: "break-all" }}>
+        <div
+          style={{
+            fontSize: "12px",
+            color: "#666",
+            marginBottom: "10px",
+            wordBreak: "break-all",
+          }}
+        >
           Current: {currentUrl}
         </div>
       )}
@@ -365,8 +393,18 @@ function App() {
           )}
 
           {/* ローカルとリモート時のみソートとリストを表示 */}
-          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "8px" }}>
-            <select value={sortOrder} onChange={handleSortChange} style={{ padding: "4px", fontSize: "12px" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              marginBottom: "8px",
+            }}
+          >
+            <select
+              value={sortOrder}
+              onChange={handleSortChange}
+              style={{ padding: "4px", fontSize: "12px" }}
+            >
               <option value="desc">▼ 新しい順</option>
               <option value="asc">▲ 古い順</option>
               <option value="manual">≡ 手動(ドラッグ)</option>

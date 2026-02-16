@@ -29,14 +29,14 @@ function SortableItem({
   const handleItemClick = (e) => {
     // 検索モード以外は何もしない
     if (viewMode !== "search") return;
-    
+
     // ボタンや入力フォーム、SVGアイコンのクリックならURL遷移しない
     const tagName = e.target.tagName.toUpperCase();
-    if (['BUTTON', 'INPUT', 'SVG', 'PATH'].includes(tagName)) return;
+    if (["BUTTON", "INPUT", "SVG", "PATH"].includes(tagName)) return;
 
     // URLがあれば新しいタブで開く
     if (memo.url) {
-      window.open(memo.url, '_blank');
+      window.open(memo.url, "_blank");
     }
   };
 
@@ -53,8 +53,8 @@ function SortableItem({
     gap: "8px",
 
     opacity: isDragging ? 0.5 : 1,
-    position: 'relative',
-    touchAction: 'none',
+    position: "relative",
+    touchAction: "none",
     // ★追加: 検索モードのときはカーソルを指にする
     cursor: viewMode === "search" ? "pointer" : "default",
   };
@@ -82,10 +82,16 @@ function SortableItem({
 
       {/* メモの中身エリア（幅いっぱい使う） */}
       <div style={{ flex: 1, overflow: "hidden" }}>
-        
         {/* ★タグ表示エリア - addtags由来 */}
         {memo.tags && memo.tags.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "4px" }}>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "4px",
+              marginBottom: "4px",
+            }}
+          >
             {memo.tags.map((tag) => (
               <span
                 key={tag}
@@ -94,7 +100,7 @@ function SortableItem({
                   backgroundColor: "rgba(0,0,0,0.05)",
                   padding: "1px 5px",
                   borderRadius: "8px",
-                  color: "#555"
+                  color: "#555",
                 }}
               >
                 #{tag}
@@ -220,7 +226,6 @@ function MemoList({
   pasteMemo,
   changeColor,
   deleteMemo,
-  handleLike, // 追加
 }) {
   return (
     <div>
