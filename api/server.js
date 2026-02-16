@@ -72,6 +72,31 @@ app.post("/users/login", async (req, res) => {
   res.json({ id: data.id, name: data.name });
 });
 
+app.post("/memos/:id/like", async (req, res) => {
+  const { id } = req.params;
+  const { data, error } = await supabase
+    .from("memos")
+    .select("good")
+    .eq("id", id)
+    .single();
+
+  if (error || !data) {
+    return res.status(404).json({ message: "Memo not found" });
+  }
+
+  const newGood = (data.good || 0) + 1;
+  const { error: updateError } = await supabase
+    .from("memos")
+    .update({ good: newGood })
+    .eq("id", id);
+
+  if (updateError) {
+    return res.status(500).json({ message: "Failed to update" });
+  }
+
+  res.json({ id, good: newGood });
+});
+
 app.get("/health", (_req, res) => {
   res.json({ ok: true });
 });
