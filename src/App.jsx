@@ -74,8 +74,9 @@ function App() {
         liked: false,
         hidden: false,
         good: 0,
-        pasted: false,
-        memoColor: "#fff8b0",
+        pasted:false,
+        memoColor:"#fff8b0",
+        isCanvas:false,
       };
       newMemos = [...memos, newMemo];
     }
@@ -147,10 +148,42 @@ function App() {
     }
   };
 
-  const changeColor = (memo, e) => {
-    memo.memoColor = e.target.value;
-    const newMemos = memos.map((m) => (m.id === memo.id ? memo : m));
-    chrome.storage.local.set({ memos: newMemos });
+  const filterMemo=(memo)=>{
+    console.log("toggle all memo");
+    memo.hidden=memo.hidden?false:true;
+    const newMemos=memos.map(m=>m.id===memo.id?memo:m);
+    chrome.storage.local.set({memos:newMemos});
+    setMemos(newMemos);
+    console.log(newMemos.hidden);
+  }
+  const makeCanvas = () => {
+  const now = new Date().toLocaleString();
+
+  const newCanvasMemo = {
+    id: Date.now(),
+    url: currentUrl,
+    text: "",
+    createdAt: now,
+    updatedAt: now,
+    liked: false,
+    hidden: false,
+    good: 0,
+    pasted: false,
+    memoColor: "#ffffff",
+    isCanvas: true,
+  };
+
+  const newMemos = [...memos, newCanvasMemo];
+
+  setMemos(newMemos);
+  chrome.storage.local.set({ memos: newMemos });
+  console.log("Canvas memo created", newCanvasMemo);
+};
+
+  const changeColor=(memo,e)=>{
+    memo.memoColor=e.target.value;
+    const newMemos=memos.map(m=>m.id===memo.id?memo:m);
+    chrome.storage.local.set({memos:newMemos});
     setMemos(newMemos);
     console.log(newMemos);
   };
@@ -212,38 +245,13 @@ function App() {
         }}
       >
         <h2>📝 URL Memo</h2>
-        <button
-          onClick={() => {
-            console.log("toggle all memo");
-            chrome.storage.local.get(["memos"], (res) => {
-              const memos = res.memos || [];
-              memos.forEach((m) => {
-                console.log(m);
-                m.hidden = m.hidden ? false : true;
-              });
-              console.log(memos);
-              chrome.storage.local.set({ memos });
-              console.log(memos);
-            });
-          }}
-        >
+        <button onClick={()=>filterMemo(memos.find(m=>m.url===currentUrl))}>
           &times;
         </button>
-        <button
-          onClick={() => {
-            chrome.storage.local.get(["memos"], (res) => {
-              const memos = res.memos || [];
-              memos.forEach((m) => {
-                console.log(m);
-                if (!m.liked) m.hidden = m.hidden ? false : true;
-              });
-              console.log("delete all memo");
-              chrome.storage.local.set({ memos });
-            });
-          }}
-        >
-          <span style={{ fontSize: "12px" }}>&times;</span>
+        <button onClick={()=>filterMemo(memos.find(m=>m.url===currentUrl&&!m.liked))}>
+            <span style={{fontSize:"12px"}}>&times;</span>
         </button>
+        <button onClick={()=>makeCanvas()}>お絵描き</button>
       </div>
 
       <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
