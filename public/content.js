@@ -38,7 +38,7 @@ const MemoUpdate=(allMemos)=>{
         });
         div.className='page-memo';
         Object.assign(header.style,{
-            height:'20px',
+            height:'10px',
             display:'flex',
             background:`${memo.memoColor||"#fff8b0"}`,
             cursor:'grab',
@@ -49,6 +49,17 @@ const MemoUpdate=(allMemos)=>{
             width:'100%',
         });
         textarea.value=memo.text;
+        textarea.addEventListener('change',()=>{
+            memo.text=textarea.value;
+            chrome.storage.local.get(['memos'], res => {
+                const memos = res.memos || [];
+                const idx = memos.findIndex(m => m.id === memo.id);
+                if (idx !== -1) {
+                    memos[idx] = memo;
+                    chrome.storage.local.set({ memos });
+                }
+            });
+        })
         div.appendChild(header);
         div.appendChild(textarea);
         MemoDrag(header,div,memo);
