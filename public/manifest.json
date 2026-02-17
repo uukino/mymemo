@@ -6,7 +6,8 @@
   "permissions": ["storage", "activeTab", "tabs"],
   "host_permissions": [
     "https://mymemo-y2n2.onrender.com/*",
-    "http://localhost:3001/*"
+    "http://localhost:3001/*",
+    "https://my-memo-api.meganekaitai.workers.dev/*"
   ],
   "action": {
     "default_popup": "index.html"
