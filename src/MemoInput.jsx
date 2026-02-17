@@ -3,8 +3,8 @@ import { useState } from "react";
 function MemoInput({
   inputText,
   setInputText,
-  inputTags,      // ★追加
-  setInputTags,   // ★追加
+  inputTags,      
+  setInputTags,   
   editingId,
   saveMemo,
   shareMemo,
@@ -73,7 +73,7 @@ function MemoInput({
                   padding: 0,
                   fontSize: "12px",
                   color: "#666",
-                  lineHeight: 1
+                  lineHeight: 1,
                 }}
               >
                 &times;
@@ -98,7 +98,7 @@ function MemoInput({
         />
       </div>
 
-      <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+      <div style={{ display: "flex", gap: "8px", marginBottom: "16px" ,padding: "0.6em 1.2em",}}>
         <button onClick={saveMemo} style={{ flex: 1 }}>
           {editingId ? "更新する" : "保存する"}
         </button>

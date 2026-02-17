@@ -257,16 +257,19 @@ function App() {
     memo.updated_at || memo.updatedAt || memo.created_at || memo.createdAt || "";
 
   return (
-    <div style={{ width: "300px", padding: "16px", fontFamily: "sans-serif" }}>
-      <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
+    <div style={{ width: "300px", padding: "16px", fontFamily: "sans-serif",alignItems:"flex-start" }}>
+      <div
+        style={{ display: "flex", marginBottom: "12px", justifyContent: "space-between", alignItems: "flex-start" }}
+      >
         <h2>📝 URL Memo</h2>
         <button onClick={() => filterMemo(memos.find((m) => m.url === currentUrl))}>&times;</button>
         <button onClick={makeCanvas}>お絵描き</button>
       </div>
 
       <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
-        <button onClick={() => setViewMode("local")} style={{ flex: 1, background: viewMode === "local" ? "#ddd" : "" }}>ローカル</button>
-        <button onClick={() => setViewMode("remote")} style={{ flex: 1, background: viewMode === "remote" ? "#ddd" : "" }}>リモート</button>
+        <button onClick={() => setViewMode("local")} style={{ flex: 1, background: viewMode === "local" ? "#ddd" : "" }}>オフライン</button>
+        <button onClick={() => setViewMode("remote")} style={{ flex: 1, background: viewMode === "remote" ? "#ddd" : "" }}>オンライン</button>
+        {/*検索ボタン */}
         <button onClick={() => setViewMode("search")} style={{ flex: 1, background: viewMode === "search" ? "#ddd" : "" }}>検索</button>
         <button onClick={() => setViewMode("mypage")} style={{ flex: 1, background: viewMode === "mypage" ? "#ddd" : "" }}>マイページ</button>
       </div>

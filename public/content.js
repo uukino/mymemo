@@ -54,10 +54,9 @@ const MemoUpdate = (allMemos) => {
             borderBottom: '1px solid rgba(0,0,0,0.1)',
             borderRadius: '4px 4px 0 0',
         });
-
-        Object.assign(textarea.style, {
-            width: '100%',
-            height: '100%',
+        Object.assign(textarea.style,{
+            width:'100%',
+            height:`${memo.height?memo.height-30:20}px`,
             resize: 'none',
             border: 'none',
             outline: 'none',
