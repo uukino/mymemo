@@ -7,21 +7,17 @@ process.stdout.write("=== SERVER SCRIPT STARTED ===\n");
 console.log("=== Server Starting ===");
 console.log("NODE_ENV:", process.env.NODE_ENV);
 console.log("PORT:", process.env.PORT || 3001);
-console.log("SUPABASE_URL:", process.env.SUPABASE_URL ? "✓ Set" : "✗ Missing");
+console.log("SUPABASE_URL:", process.env.SUPABASE_URL);
 console.log(
   "SUPABASE_SERVICE_ROLE_KEY:",
-  process.env.SUPABASE_SERVICE_ROLE_KEY ? "✓ Set" : "✗ Missing",
+  process.env.SUPABASE_SERVICE_ROLE_KEY ? "[HIDDEN]" : "undefined",
 );
 
-if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  console.error("ERROR: Missing required environment variables!");
-  console.error("SUPABASE_URL:", process.env.SUPABASE_URL);
-  console.error(
-    "SUPABASE_SERVICE_ROLE_KEY:",
-    process.env.SUPABASE_SERVICE_ROLE_KEY ? "[HIDDEN]" : "undefined",
-  );
-  process.exit(1);
-}
+// 一時的にコメントアウト
+// if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+//   console.error("ERROR: Missing required environment variables!");
+//   process.exit(1);
+// }
 
 const app = express();
 console.log("Express app created");
@@ -37,21 +33,38 @@ app.use((req, res, next) => {
   next();
 });
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-);
-
-console.log("Supabase client created successfully");
+let supabase;
+if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+  );
+  console.log("Supabase client created successfully");
+} else {
+  console.warn(
+    "WARNING: Supabase not initialized - environment variables missing",
+  );
+}
 
 console.log("Registering /health endpoint");
 app.get("/health", (_req, res) => {
   console.log("Health check requested");
-  res.json({ ok: true, timestamp: new Date().toISOString() });
+  res.json({
+    ok: true,
+    timestamp: new Date().toISOString(),
+    supabaseConnected: !!supabase,
+    env: {
+      hasSupabaseUrl: !!process.env.SUPABASE_URL,
+      hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    },
+  });
 });
 
 console.log("Registering /memos endpoints");
 app.get("/memos", async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ error: "Supabase not configured" });
+  }
   console.log("GET /memos - query:", req.query);
   const { url, q } = req.query;
 
@@ -76,6 +89,9 @@ app.get("/memos", async (req, res) => {
 });
 
 app.post("/memos", async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ error: "Supabase not configured" });
+  }
   console.log("POST /memos - body:", req.body);
   const { url, text, user_id } = req.body;
   const { data, error } = await supabase
@@ -92,6 +108,9 @@ app.post("/memos", async (req, res) => {
 
 console.log("Registering /users endpoints");
 app.post("/users/register", async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ error: "Supabase not configured" });
+  }
   console.log("POST /users/register - body:", {
     name: req.body.name,
     password: "***",
@@ -123,6 +142,9 @@ app.post("/users/register", async (req, res) => {
 });
 
 app.post("/users/login", async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ error: "Supabase not configured" });
+  }
   console.log("POST /users/login - body:", {
     name: req.body.name,
     password: "***",
@@ -155,6 +177,9 @@ app.post("/users/login", async (req, res) => {
 });
 
 app.post("/memos/:id/like", async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ error: "Supabase not configured" });
+  }
   console.log("POST /memos/:id/like - id:", req.params.id);
   const { id } = req.params;
   const { data, error } = await supabase
