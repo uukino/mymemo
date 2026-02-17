@@ -155,7 +155,6 @@ function App() {
 
   // その他のヘルパー関数
   const shareMemo = async () => {
-    /* ...省略せずにそのまま... */
 
     const trimmed = inputText.trim();
     const fallbackMemo = memos.filter((memo) => memo.url === currentUrl).at(0);
@@ -281,9 +280,9 @@ function App() {
     "";
 
   return (
-    <div style={{ width: "300px", padding: "16px", fontFamily: "sans-serif" }}>
+    <div style={{ width: "300px", padding: "16px", fontFamily: "sans-serif",alignItems:"flex-start" }}>
       <div
-        style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}
+        style={{ display: "flex", marginBottom: "12px", justifyContent: "space-between", alignItems: "flex-start" }}
       >
         <h2>📝 URL Memo</h2>
         <button
@@ -302,9 +301,9 @@ function App() {
       </div>
 
       <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
-        <button onClick={() => setViewMode("local")} style={{ flex: 1, background: viewMode === "local" ? "#ddd" : "" }}>ローカル</button>
-        <button onClick={() => setViewMode("remote")} style={{ flex: 1, background: viewMode === "remote" ? "#ddd" : "" }}>リモート</button>
-        {/* ★追加: 検索ボタン */}
+        <button onClick={() => setViewMode("local")} style={{ flex: 1, background: viewMode === "local" ? "#ddd" : "" }}>オフライン</button>
+        <button onClick={() => setViewMode("remote")} style={{ flex: 1, background: viewMode === "remote" ? "#ddd" : "" }}>オンライン</button>
+        {/*検索ボタン */}
         <button onClick={() => setViewMode("search")} style={{ flex: 1, background: viewMode === "search" ? "#ddd" : "" }}>検索</button>
         <button onClick={() => setViewMode("mypage")} style={{ flex: 1, background: viewMode === "mypage" ? "#ddd" : "" }}>マイページ</button>
       </div>

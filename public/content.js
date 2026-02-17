@@ -50,6 +50,8 @@ const MemoUpdate=(allMemos)=>{
         });
         Object.assign(textarea.style,{
             width:'100%',
+            height:`${memo.height?memo.height-30:20}px`,
+            
         });
         textarea.value=memo.text;
         textarea.addEventListener('change',()=>{
