@@ -1,17 +1,24 @@
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
+import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 
-dotenv.config();
+// dotenv を最初に読み込む
+config();
 
 console.log("=== Server Starting ===");
+console.log("NODE_ENV:", process.env.NODE_ENV);
 console.log("PORT:", process.env.PORT || 3001);
 console.log("SUPABASE_URL:", process.env.SUPABASE_URL ? "✓ Set" : "✗ Missing");
 console.log(
   "SUPABASE_SERVICE_ROLE_KEY:",
   process.env.SUPABASE_SERVICE_ROLE_KEY ? "✓ Set" : "✗ Missing",
 );
+
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.error("ERROR: Missing required environment variables!");
+  process.exit(1);
+}
 
 const app = express();
 app.use(cors({ origin: "*" })); // 本番は拡張機能のoriginに限定
@@ -167,8 +174,9 @@ app.post("/memos/:id/like", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
+const server = app.listen(PORT, "0.0.0.0", () => {
   console.log(`=== API Server Running on Port ${PORT} ===`);
+  console.log("Server is listening on all network interfaces");
   console.log("Available endpoints:");
   console.log("  GET  /health");
   console.log("  POST /users/register");
@@ -176,4 +184,17 @@ app.listen(PORT, () => {
   console.log("  GET  /memos");
   console.log("  POST /memos");
   console.log("  POST /memos/:id/like");
+});
+
+server.on("error", (err) => {
+  console.error("Server error:", err);
+  process.exit(1);
+});
+
+process.on("SIGTERM", () => {
+  console.log("SIGTERM received, closing server...");
+  server.close(() => {
+    console.log("Server closed");
+    process.exit(0);
+  });
 });
