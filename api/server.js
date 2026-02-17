@@ -2,12 +2,6 @@ import express from "express";
 import cors from "cors";
 import { createClient } from "@supabase/supabase-js";
 
-// ローカル環境でのみ dotenv を読み込む
-if (process.env.NODE_ENV !== "production") {
-  const dotenv = await import("dotenv");
-  dotenv.config();
-}
-
 console.log("=== Server Starting ===");
 console.log("NODE_ENV:", process.env.NODE_ENV);
 console.log("PORT:", process.env.PORT || 3001);
