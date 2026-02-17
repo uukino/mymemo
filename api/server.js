@@ -237,3 +237,4 @@ process.on("SIGTERM", () => {
 });
 
 console.log("Script execution completed");
+// Update health check
