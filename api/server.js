@@ -2,6 +2,8 @@ import express from "express";
 import cors from "cors";
 import { createClient } from "@supabase/supabase-js";
 
+// 強制的に標準出力に書き込む
+process.stdout.write("=== SERVER SCRIPT STARTED ===\n");
 console.log("=== Server Starting ===");
 console.log("NODE_ENV:", process.env.NODE_ENV);
 console.log("PORT:", process.env.PORT || 3001);
@@ -22,8 +24,13 @@ if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
 }
 
 const app = express();
+console.log("Express app created");
+
 app.use(cors({ origin: "*" }));
+console.log("CORS enabled");
+
 app.use(express.json());
+console.log("JSON parser enabled");
 
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
@@ -37,11 +44,13 @@ const supabase = createClient(
 
 console.log("Supabase client created successfully");
 
+console.log("Registering /health endpoint");
 app.get("/health", (_req, res) => {
   console.log("Health check requested");
   res.json({ ok: true, timestamp: new Date().toISOString() });
 });
 
+console.log("Registering /memos endpoints");
 app.get("/memos", async (req, res) => {
   console.log("GET /memos - query:", req.query);
   const { url, q } = req.query;
@@ -81,6 +90,7 @@ app.post("/memos", async (req, res) => {
   res.json(data[0]);
 });
 
+console.log("Registering /users endpoints");
 app.post("/users/register", async (req, res) => {
   console.log("POST /users/register - body:", {
     name: req.body.name,
@@ -174,6 +184,8 @@ app.post("/memos/:id/like", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3001;
+console.log("About to start server on port:", PORT);
+
 const server = app.listen(PORT, "0.0.0.0", () => {
   console.log(`=== API Server Running on Port ${PORT} ===`);
   console.log("Server is listening on all network interfaces");
@@ -198,3 +210,5 @@ process.on("SIGTERM", () => {
     process.exit(0);
   });
 });
+
+console.log("Script execution completed");
