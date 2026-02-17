@@ -1,10 +1,12 @@
 import express from "express";
 import cors from "cors";
-import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 
-// dotenv を最初に読み込む
-config();
+// ローカル環境でのみ dotenv を読み込む
+if (process.env.NODE_ENV !== "production") {
+  const dotenv = await import("dotenv");
+  dotenv.config();
+}
 
 console.log("=== Server Starting ===");
 console.log("NODE_ENV:", process.env.NODE_ENV);
@@ -17,14 +19,18 @@ console.log(
 
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
   console.error("ERROR: Missing required environment variables!");
+  console.error("SUPABASE_URL:", process.env.SUPABASE_URL);
+  console.error(
+    "SUPABASE_SERVICE_ROLE_KEY:",
+    process.env.SUPABASE_SERVICE_ROLE_KEY ? "[HIDDEN]" : "undefined",
+  );
   process.exit(1);
 }
 
 const app = express();
-app.use(cors({ origin: "*" })); // 本番は拡張機能のoriginに限定
+app.use(cors({ origin: "*" }));
 app.use(express.json());
 
-// リクエストログ用ミドルウェア
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
   next();
@@ -35,7 +41,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY,
 );
 
-console.log("Supabase client created");
+console.log("Supabase client created successfully");
 
 app.get("/health", (_req, res) => {
   console.log("Health check requested");
@@ -68,7 +74,7 @@ app.get("/memos", async (req, res) => {
 
 app.post("/memos", async (req, res) => {
   console.log("POST /memos - body:", req.body);
-  const { url, text, user_id } = req.body; // 本番はJWTから user_id を取得
+  const { url, text, user_id } = req.body;
   const { data, error } = await supabase
     .from("memos")
     .insert([{ url, text, user_id }])
