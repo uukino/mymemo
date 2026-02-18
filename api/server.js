@@ -77,7 +77,16 @@ app.get("/memos", async (req, res) => {
   let query = supabase.from("memos").select("*");
 
   if (q && q.trim()) {
-    query = query.ilike("text", `%${q.trim()}%`);
+    const qTrimmed = q.trim();
+    // ワイルドカード（%）で全件取得されるのを防ぐ
+    if (qTrimmed.includes("%") || qTrimmed.includes("_")) {
+      return res.status(400).json({ error: "検索に % や _ は使えません" });
+    }
+    // 最低2文字以上を要求（1文字や空文字の回避）
+    if (qTrimmed.length < 2) {
+      return res.status(400).json({ error: "検索は2文字以上で指定してください" });
+    }
+    query = query.ilike("text", `%${qTrimmed}%`);
   } else if (url && url.trim()) {
     query = query.eq("url", url.trim());
   } else {
