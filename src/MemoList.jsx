@@ -1,21 +1,23 @@
-import React from 'react';
+import React from "react";
 import {
   SortableContext,
   useSortable,
   verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 // 個別のメモ（ドラッグ可能な行）コンポーネント
-function SortableItem({ 
-  memo, 
-  viewMode, 
-  formatTimestamp, 
-  handleEdit, 
-  pasteMemo, 
-  changeColor, 
-  deleteMemo, 
-  filterMemo // ★追加
+function SortableItem({
+  memo,
+  viewMode,
+  formatTimestamp,
+  handleEdit,
+  pasteMemo,
+  changeColor,
+  deleteMemo,
+  filterMemo,
+  handleLike,
+  userId,
 }) {
   const {
     attributes,
@@ -29,9 +31,9 @@ function SortableItem({
   const handleItemClick = (e) => {
     if (viewMode !== "search") return;
     const tagName = e.target.tagName.toUpperCase();
-    if (['BUTTON', 'INPUT', 'SVG', 'PATH'].includes(tagName)) return;
+    if (["BUTTON", "INPUT", "SVG", "PATH"].includes(tagName)) return;
     if (memo.url) {
-      window.open(memo.url, '_blank');
+      window.open(memo.url, "_blank");
     }
   };
 
@@ -47,8 +49,8 @@ function SortableItem({
     display: "flex",
     gap: "8px",
     opacity: isDragging ? 0.5 : 1,
-    position: 'relative',
-    touchAction: 'none',
+    position: "relative",
+    touchAction: "none",
     cursor: viewMode === "search" ? "pointer" : "default",
   };
 
@@ -74,7 +76,14 @@ function SortableItem({
 
       <div style={{ flex: 1, overflow: "hidden" }}>
         {memo.tags && memo.tags.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "4px" }}>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "4px",
+              marginBottom: "4px",
+            }}
+          >
             {memo.tags.map((tag) => (
               <span
                 key={tag}
@@ -83,7 +92,7 @@ function SortableItem({
                   backgroundColor: "rgba(0,0,0,0.05)",
                   padding: "1px 5px",
                   borderRadius: "8px",
-                  color: "#555"
+                  color: "#555",
                 }}
               >
                 #{tag}
@@ -95,7 +104,7 @@ function SortableItem({
         <div style={{ whiteSpace: "pre-wrap", marginBottom: "4px" }}>
           {memo.text}
         </div>
-        
+
         <div
           style={{
             display: "flex",
@@ -103,21 +112,43 @@ function SortableItem({
             alignItems: "center",
           }}
         >
-          <span style={{ fontSize: "10px", color: "#888" }}>
+          <div style={{ fontSize: "10px", color: "#888" }}>
             {formatTimestamp(memo)}
-          </span>
+            {/* ★追加: ユーザー名表示 */}
+            {viewMode === "remote" && memo.user_name && (
+              <span> by {memo.user_name}</span>
+            )}
+          </div>
 
           {viewMode === "remote" ? (
-            <span style={{ fontSize: "10px", color: "#888" }}>
-              {memo.user_id ? `by ${memo.user_id}` : ""}
-            </span>
+            <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+              {/* ★追加: いいねボタン */}
+              <button
+                onClick={() => handleLike(memo.id)}
+                style={{
+                  fontSize: "12px",
+                  padding: "2px 8px",
+                  backgroundColor: "#fff3e0",
+                  border: "1px solid #ffb74d",
+                  cursor: "pointer",
+                  borderRadius: "4px",
+                }}
+              >
+                👍 {memo.good || 0}
+              </button>
+            </div>
           ) : (
             <div style={{ display: "flex", gap: "4px" }}>
               <input
                 type="color"
                 value={memo.memoColor || "#fff8b0"}
                 onChange={(e) => changeColor(memo, e)}
-                style={{ width: "20px", height: "20px", border: "none", padding: 0 }}
+                style={{
+                  width: "20px",
+                  height: "20px",
+                  border: "none",
+                  padding: 0,
+                }}
               />
               <button
                 onClick={() => pasteMemo(memo)}
@@ -180,6 +211,7 @@ function MemoList({
   deleteMemo,
   handleLike,
   filterMemo, // ★追加
+  userId,
 }) {
   return (
     <div>
@@ -201,7 +233,9 @@ function MemoList({
               pasteMemo={pasteMemo}
               changeColor={changeColor}
               deleteMemo={deleteMemo}
-              filterMemo={filterMemo} // ★追加
+              filterMemo={filterMemo}
+              handleLike={handleLike}
+              userId={userId}
             />
           ))}
         </SortableContext>
