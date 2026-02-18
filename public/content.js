@@ -37,7 +37,6 @@ const MemoUpdate = (allMemos) => {
             zIndex: 999998,
             display: memo.hidden ? 'none' : 'block',
             boxSizing: 'border-box',
-            // ★以下の2行を追加・復活させました
             resize: 'both',
             overflow: 'auto',
         });
@@ -134,7 +133,7 @@ const createControlButtons = (memo, div) => {
     hideBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         div.style.display = 'none';
-        memo.hidden = true;
+        memo.pasted = false;
         saveMemoData(memo);
     });
 
@@ -223,10 +222,10 @@ const renderCanvas = (memo, i, allMemos) => {
     header.appendChild(controls);
 
     const canvas = document.createElement('canvas');
-    canvas.width = 500;
-    canvas.height = 500;
-    canvas.style.width = '500px';
-    canvas.style.height = '500px';
+    canvas.width = 300;
+    canvas.height = 300;
+    canvas.style.width = '300px';
+    canvas.style.height = '300px';
     canvas.style.display = 'block';
     const ctx = canvas.getContext('2d');
     

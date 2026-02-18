@@ -110,7 +110,7 @@ function App() {
         liked: false,
         hidden: false,
         good: 0,
-        pasted: true, // 新規作成時はデフォルトで貼り付け状態にするのが一般的
+        pasted: true,
         memoColor: "#fff8b0",
         isCanvas: false,
       };
@@ -207,6 +207,7 @@ function App() {
     }
   };
 
+
   const handleLike = async (memoId) => {
     if (!userId) {
       alert("ログインが必要です");
@@ -226,6 +227,7 @@ function App() {
     }
   };
   // 表示・非表示を切り替える関数
+
   const filterMemo = (memo) => {
     if (!memo) return;
     const updated = { ...memo, hidden: !memo.hidden };
@@ -294,6 +296,7 @@ function App() {
     "";
 
   return (
+
     <div
       style={{
         width: "300px",
@@ -302,6 +305,7 @@ function App() {
         alignItems: "flex-start",
       }}
     >
+
       <div
         style={{
           display: "flex",
@@ -319,29 +323,46 @@ function App() {
         <button onClick={makeCanvas}>お絵描き</button>
       </div>
 
+      {/* ★修正: 選択中のボタンの文字色を黒(#333)にする処理を追加 */}
       <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
-        <button
-          onClick={() => setViewMode("local")}
-          style={{ flex: 1, background: viewMode === "local" ? "#ddd" : "" }}
+
+        <button 
+          onClick={() => setViewMode("local")} 
+          style={{ 
+            flex: 1, 
+            background: viewMode === "local" ? "#ddd" : "",
+            color: viewMode === "local" ? "#333" : "" 
+          }}
         >
           オフライン
         </button>
-        <button
-          onClick={() => setViewMode("remote")}
-          style={{ flex: 1, background: viewMode === "remote" ? "#ddd" : "" }}
+        <button 
+          onClick={() => setViewMode("remote")} 
+          style={{ 
+            flex: 1, 
+            background: viewMode === "remote" ? "#ddd" : "",
+            color: viewMode === "remote" ? "#333" : "" 
+          }}
         >
           オンライン
         </button>
-        {/*検索ボタン */}
-        <button
-          onClick={() => setViewMode("search")}
-          style={{ flex: 1, background: viewMode === "search" ? "#ddd" : "" }}
+        <button 
+          onClick={() => setViewMode("search")} 
+          style={{ 
+            flex: 1, 
+            background: viewMode === "search" ? "#ddd" : "",
+            color: viewMode === "search" ? "#333" : "" 
+          }}
         >
           検索
         </button>
-        <button
-          onClick={() => setViewMode("mypage")}
-          style={{ flex: 1, background: viewMode === "mypage" ? "#ddd" : "" }}
+        <button 
+          onClick={() => setViewMode("mypage")} 
+          style={{ 
+            flex: 1, 
+            background: viewMode === "mypage" ? "#ddd" : "",
+            color: viewMode === "mypage" ? "#333" : "" 
+          }}
         >
           マイページ
         </button>
@@ -439,7 +460,7 @@ function App() {
               changeColor={changeColor}
               deleteMemo={deleteMemo}
               handleLike={handleLike}
-              filterMemo={filterMemo} // ★追加: ここで関数を渡す
+              filterMemo={filterMemo}
             />
           </DndContext>
         </>
