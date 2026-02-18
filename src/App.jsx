@@ -7,10 +7,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import {
-  arrayMove,
-  sortableKeyboardCoordinates,
-} from "@dnd-kit/sortable";
+import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 
 import MemoInput from "./MemoInput";
 import MemoList from "./MemoList";
@@ -34,12 +31,13 @@ function App() {
   const [shareError, setShareError] = useState("");
   const [sortOrder, setSortOrder] = useState("desc");
   const [inputTags, setInputTags] = useState([]);
-
+  const [userId, setUserId] = useState("");
+  const [userName, setUserName] = useState("");
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   useEffect(() => {
@@ -53,7 +51,19 @@ function App() {
       setCurrentUrl("http://localhost");
     }
     loadMemosAndSettings();
+    loadUserInfo();
   }, []);
+
+  const loadUserInfo = () => {
+    if (typeof chrome !== "undefined" && chrome.storage) {
+      chrome.storage.local.get(["userId", "userName"], (result) => {
+        if (result.userId) {
+          setUserId(result.userId);
+          setUserName(result.userName || "");
+        }
+      });
+    }
+  };
 
   useEffect(() => {
     if (viewMode !== "remote" || !currentUrl) return;
@@ -84,7 +94,9 @@ function App() {
 
     if (editingId) {
       newMemos = memos.map((memo) =>
-        memo.id === editingId ? { ...memo, text, tags: inputTags, updatedAt: now } : memo
+        memo.id === editingId
+          ? { ...memo, text, tags: inputTags, updatedAt: now }
+          : memo,
       );
       setEditingId(null);
     } else {
@@ -157,7 +169,12 @@ function App() {
     setShareError("");
     try {
       const payload = { url: currentUrl, text };
-      if (PUBLIC_USER_ID) payload.user_id = PUBLIC_USER_ID;
+      if (userId) {
+        payload.user_id = userId;
+        payload.user_name = userName;
+      } else if (PUBLIC_USER_ID) {
+        payload.user_id = PUBLIC_USER_ID;
+      }
       const response = await fetch(`${API_BASE}/memos`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -176,7 +193,9 @@ function App() {
     setRemoteLoading(true);
     setRemoteError("");
     try {
-      const res = await fetch(`${API_BASE}/memos?url=${encodeURIComponent(currentUrl)}`);
+      const res = await fetch(
+        `${API_BASE}/memos?url=${encodeURIComponent(currentUrl)}`,
+      );
       if (!res.ok) throw new Error(res.status);
       const data = await res.json();
       setRemoteMemos(Array.isArray(data) ? data : []);
@@ -187,6 +206,27 @@ function App() {
       setRemoteLoading(false);
     }
   };
+
+
+  const handleLike = async (memoId) => {
+    if (!userId) {
+      alert("ログインが必要です");
+      return;
+    }
+    try {
+      const response = await fetch(`${API_BASE}/memos/${memoId}/like`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId }),
+      });
+      if (!response.ok) throw new Error("いいね失敗");
+      // リモートメモを再取得
+      await fetchRemoteMemos();
+    } catch (err) {
+      console.error("いいねエラー:", err);
+    }
+  };
+  // 表示・非表示を切り替える関数
 
   const filterMemo = (memo) => {
     if (!memo) return;
@@ -245,28 +285,47 @@ function App() {
     setEditingId(null);
   };
 
-  const handleLike = async (memoId) => {
-    /* リモート用機能省略 */
-  };
-
   const currentPageMemos = memos.filter((memo) => memo.url === currentUrl);
   const currentList = viewMode === "remote" ? remoteMemos : currentPageMemos;
 
   const formatTimestamp = (memo) =>
-    memo.updated_at || memo.updatedAt || memo.created_at || memo.createdAt || "";
+    memo.updated_at ||
+    memo.updatedAt ||
+    memo.created_at ||
+    memo.createdAt ||
+    "";
 
   return (
-    <div style={{ width: "300px", padding: "16px", fontFamily: "sans-serif", alignItems:"flex-start" }}>
+
+    <div
+      style={{
+        width: "300px",
+        padding: "16px",
+        fontFamily: "sans-serif",
+        alignItems: "flex-start",
+      }}
+    >
+
       <div
-        style={{ display: "flex", marginBottom: "12px", justifyContent: "space-between", alignItems: "flex-start" }}
+        style={{
+          display: "flex",
+          marginBottom: "12px",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+        }}
       >
         <h2>📝 URL Memo</h2>
-        <button onClick={() => filterMemo(memos.find((m) => m.url === currentUrl))}>&times;</button>
+        <button
+          onClick={() => filterMemo(memos.find((m) => m.url === currentUrl))}
+        >
+          &times;
+        </button>
         <button onClick={makeCanvas}>お絵描き</button>
       </div>
 
       {/* ★修正: 選択中のボタンの文字色を黒(#333)にする処理を追加 */}
       <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
+
         <button 
           onClick={() => setViewMode("local")} 
           style={{ 
@@ -310,7 +369,14 @@ function App() {
       </div>
 
       {viewMode !== "search" && (
-        <div style={{ fontSize: "12px", color: "#666", marginBottom: "10px", wordBreak: "break-all" }}>
+        <div
+          style={{
+            fontSize: "12px",
+            color: "#666",
+            marginBottom: "10px",
+            wordBreak: "break-all",
+          }}
+        >
           Current: {currentUrl}
         </div>
       )}
@@ -348,16 +414,32 @@ function App() {
 
           {viewMode === "remote" && (
             <div style={{ marginBottom: "16px" }}>
-              <button onClick={fetchRemoteMemos} style={{ width: "100%" }} disabled={remoteLoading}>
+              <button
+                onClick={fetchRemoteMemos}
+                style={{ width: "100%" }}
+                disabled={remoteLoading}
+              >
                 {remoteLoading ? "読み込み中..." : "リモート更新"}
               </button>
               <RemoteSearch apiBase={API_BASE} onResults={setRemoteMemos} />
-              {remoteError && <p style={{ color: "#c00", fontSize: "12px" }}>{remoteError}</p>}
+              {remoteError && (
+                <p style={{ color: "#c00", fontSize: "12px" }}>{remoteError}</p>
+              )}
             </div>
           )}
 
-          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "8px" }}>
-            <select value={sortOrder} onChange={handleSortChange} style={{ padding: "4px", fontSize: "12px" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              marginBottom: "8px",
+            }}
+          >
+            <select
+              value={sortOrder}
+              onChange={handleSortChange}
+              style={{ padding: "4px", fontSize: "12px" }}
+            >
               <option value="desc">▼ 新しい順</option>
               <option value="asc">▲ 古い順</option>
               <option value="manual">≡ 手動(ドラッグ)</option>
