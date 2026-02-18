@@ -128,7 +128,7 @@ function App() {
   const handleDragEnd = (event) => {
     const { active, over } = event;
 
-    if (active.id !== over.id) {
+    if (over && active.id !== over.id) {
       const oldIndex = memos.findIndex((m) => m.id === active.id);
       const newIndex = memos.findIndex((m) => m.id === over.id);
       const newMemos = arrayMove(memos, oldIndex, newIndex);

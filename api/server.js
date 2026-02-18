@@ -22,7 +22,13 @@ console.log(
 const app = express();
 console.log("Express app created");
 
-app.use(cors({ origin: "*" }));
+app.use(cors({
+  origin: [
+    /^chrome-extension:\/\//,
+    "http://localhost:5173",
+    "http://localhost:3001",
+  ],
+}));
 console.log("CORS enabled");
 
 app.use(express.json());
