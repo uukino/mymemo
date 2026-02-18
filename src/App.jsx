@@ -314,7 +314,7 @@ function App() {
           alignItems: "flex-start",
         }}
       >
-        <h2>📝 URL Memo</h2>
+        <h2>📝 MyMemo</h2>
         <button
           onClick={() => filterMemo(memos.find((m) => m.url === currentUrl))}
         >
