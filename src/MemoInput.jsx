@@ -13,6 +13,8 @@ function MemoInput({
   shareError,
 }) {
   const [tagText, setTagText] = useState("");
+  // ★追加: 入力バリデーション用のステート
+  const [validationError, setValidationError] = useState("");
 
   // タグ追加処理
   const handleAddTag = (e) => {
@@ -31,6 +33,26 @@ function MemoInput({
     setInputTags(inputTags.filter((tag) => tag !== tagToRemove));
   };
 
+  // ★追加: 保存ボタンクリック時のチェック
+  const handleSaveClick = () => {
+    if (!inputText.trim()) {
+      setValidationError("メモを入力してください");
+      return;
+    }
+    setValidationError(""); // エラーをクリア
+    saveMemo();
+  };
+
+  // ★追加: 共有ボタンクリック時のチェック
+  const handleShareClick = () => {
+    if (!inputText.trim()) {
+      setValidationError("メモを入力してください");
+      return;
+    }
+    setValidationError(""); // エラーをクリア
+    shareMemo();
+  };
+
   return (
     <div>
       {/* 入力エリア */}
@@ -42,7 +64,13 @@ function MemoInput({
           boxSizing: "border-box",
         }}
         value={inputText}
-        onChange={(e) => setInputText(e.target.value)}
+        onChange={(e) => {
+          setInputText(e.target.value);
+          // ★追加: 入力し始めたらエラーを消す
+          if (validationError && e.target.value.trim()) {
+            setValidationError("");
+          }
+        }}
         placeholder="メモを入力..."
       />
 
@@ -99,10 +127,10 @@ function MemoInput({
       </div>
 
       <div style={{ display: "flex", gap: "8px", marginBottom: "16px" ,padding: "0.6em 1.2em",}}>
-        <button onClick={saveMemo} style={{ flex: 1 }}>
+        <button onClick={handleSaveClick} style={{ flex: 1 }}>
           {editingId ? "更新する" : "保存する"}
         </button>
-        <button onClick={shareMemo} style={{ flex: 1 }}>
+        <button onClick={handleShareClick} style={{ flex: 1 }}>
           共有
         </button>
         {editingId && (
@@ -111,6 +139,11 @@ function MemoInput({
           </button>
         )}
       </div>
+
+      {/* ★追加: 入力バリデーションエラーの表示 */}
+      {validationError && (
+        <p style={{ color: "#c00", fontSize: "12px", fontWeight: "bold" }}>{validationError}</p>
+      )}
 
       {shareMessage && (
         <p style={{ color: "#2b7", fontSize: "12px" }}>{shareMessage}</p>
