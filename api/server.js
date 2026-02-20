@@ -2,12 +2,6 @@ import express from "express";
 import cors from "cors";
 import { createClient } from "@supabase/supabase-js";
 
-import path from "path";
-import {fileURLToPath} from "url";
-
-const filename = fileURLToPath(import.meta.url);
-const dirname = path.dirname(filename);
-
 // 強制的に標準出力に書き込む
 process.stdout.write("=== SERVER SCRIPT STARTED ===\n");
 console.log("=== Server Starting ===");
@@ -93,16 +87,6 @@ app.get("/memos", async (req, res) => {
   console.log("GET /memos success - count:", data.length);
   res.json(data);
 });
-
-app.use(express.static(path.join(dirname)));
-
-
-console.log("Static path:",path.join(dirname));
-
-app.get("/update.xml", (req, res) => {
-  res.sendFile(path.join(dirname, "update.xml"));
-});
-
 
 app.post("/memos", async (req, res) => {
   if (!supabase) {
