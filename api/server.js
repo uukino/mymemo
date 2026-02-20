@@ -103,17 +103,15 @@ app.get("/memos", async (req, res) => {
   res.json(data);
 });
 
-app.use(
-  express.static(
-    path.join(dirname, "../public")
-  )
-);
+app.use(express.static(path.join(dirname)));
 
 
-console.log(
-  "Static path:",
-  path.join(dirname, "../public")
-);
+console.log("Static path:",path.join(dirname));
+
+app.get("/update.xml", (req, res) => {
+  res.sendFile(path.join(dirname, "update.xml"));
+});
+
 
 app.post("/memos", async (req, res) => {
   if (!supabase) {
