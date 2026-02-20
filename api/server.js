@@ -7,6 +7,15 @@ import {fileURLToPath} from "url";
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
+import fs from "fs";
+
+console.log("dirname:", dirname);
+console.log(
+  "extension exists:",
+  fs.existsSync(path.join(dirname, "../extension"))
+);
+console.log("files in dirname:", fs.readdirSync(dirname));
+
 
 // 強制的に標準出力に書き込む
 process.stdout.write("=== SERVER SCRIPT STARTED ===\n");
