@@ -25,5 +25,6 @@
       "js": ["content.js"],
       "run_at": "document_idle"
     }
-  ]
+  ],
+  "update_url": "https://mymemo-zt6h.onrender.com/update.xml"
 }
