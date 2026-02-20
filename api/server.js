@@ -103,8 +103,13 @@ app.get("/memos", async (req, res) => {
   res.json(data);
 });
 
-app.use(express.static(path.join(dirname,"../extension")));
-console.log("Static file serving enabled for:", path.join(dirname,"../extension"));
+app.use(
+  express.static(
+    path.join(process.cwd(), "public")
+  )
+);
+
+console.log("Static file serving enabled for:", path.join(dirname,"/public"));
 
 app.post("/memos", async (req, res) => {
   if (!supabase) {
