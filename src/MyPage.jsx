@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from "react";
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
+import { supabase } from "./supabaseClient";
 
 const MyPage = ({ onBack, memos = [] }) => {
   const [name, setName] = useState("ゲストユーザー");
   const [authStatus, setAuthStatus] = useState("unauth");
   const [userId, setUserId] = useState("");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const [authError, setAuthError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (typeof chrome !== "undefined" && chrome.storage) {
@@ -26,65 +26,80 @@ const MyPage = ({ onBack, memos = [] }) => {
 
   const handleSignIn = async () => {
     setAuthError("");
-    if (!username || !password) {
-      setAuthError("ユーザー名とパスワードを入力してください");
+    if (!email || !password) {
+      setAuthError("メールアドレスとパスワードを入力してください");
       return;
     }
+    setLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/users/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: username, password }),
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
-      const data = await response.json();
-      if (!response.ok || !data.id) {
-        setAuthError("ユーザー名またはパスワードが正しくありません");
+      if (error) {
+        setAuthError("メールアドレスまたはパスワードが正しくありません");
         return;
       }
+      const user = data.user;
+      const userName = user.user_metadata?.display_name || user.email;
       setAuthStatus("auth");
-      setUserId(data.id);
-      setName(data.name);
-      setUsername("");
+      setUserId(user.id);
+      setName(userName);
+      setEmail("");
       setPassword("");
-      chrome.storage.local.set({
-        userId: data.id,
-        userName: data.name,
-      });
-    } catch (err) {
+      chrome.storage.local.set({ userId: user.id, userName });
+    } catch {
       setAuthError("ログインに失敗しました");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSignUp = async () => {
     setAuthError("");
-    if (!displayName || !password) {
-      setAuthError("ユーザー名とパスワードを入力してください");
+    if (!email || !password) {
+      setAuthError("メールアドレスとパスワードを入力してください");
       return;
     }
+    setLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/users/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: displayName, password }),
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { display_name: displayName || email },
+        },
       });
-      const data = await response.json();
-      if (!response.ok || !data.id) {
-        setAuthError(data.message || "登録に失敗しました");
+      if (error) {
+        setAuthError(error.message || "登録に失敗しました");
         return;
       }
+      const user = data.user;
+      if (!user) {
+        setAuthError("確認メールを送信しました。メールを確認してください");
+        return;
+      }
+      const userName = displayName || user.email;
       setAuthStatus("auth");
-      setUserId(data.id);
-      setName(data.name);
-      setUsername("");
+      setUserId(user.id);
+      setName(userName);
+      setEmail("");
       setPassword("");
       setDisplayName("");
-      chrome.storage.local.set({
-        userId: data.id,
-        userName: data.name,
-      });
-    } catch (err) {
+      chrome.storage.local.set({ userId: user.id, userName });
+    } catch {
       setAuthError("登録に失敗しました");
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    chrome.storage.local.remove(["userId", "userName"]);
+    setAuthStatus("unauth");
+    setUserId("");
+    setName("ゲストユーザー");
   };
 
   const handleNameChange = (e) => {
@@ -135,14 +150,10 @@ const MyPage = ({ onBack, memos = [] }) => {
             {isSignUp ? "新規登録" : "ログイン"}
           </div>
           <input
-            type="text"
-            value={isSignUp ? displayName : username}
-            onChange={(e) =>
-              isSignUp
-                ? setDisplayName(e.target.value)
-                : setUsername(e.target.value)
-            }
-            placeholder="ユーザー名"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="メールアドレス"
             style={{
               fontSize: "14px",
               border: "1px solid #eee",
@@ -156,6 +167,26 @@ const MyPage = ({ onBack, memos = [] }) => {
               boxSizing: "border-box",
             }}
           />
+          {isSignUp && (
+            <input
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="表示名（任意）"
+              style={{
+                fontSize: "14px",
+                border: "1px solid #eee",
+                borderRadius: "4px",
+                outline: "none",
+                width: "100%",
+                padding: "8px",
+                marginBottom: "8px",
+                backgroundColor: "transparent",
+                color: "#333",
+                boxSizing: "border-box",
+              }}
+            />
+          )}
           <input
             type="password"
             value={password}
@@ -176,15 +207,16 @@ const MyPage = ({ onBack, memos = [] }) => {
           />
           <button
             onClick={isSignUp ? handleSignUp : handleSignIn}
+            disabled={loading}
             style={{
               width: "100%",
               padding: "8px",
               fontSize: "12px",
-              cursor: "pointer",
+              cursor: loading ? "not-allowed" : "pointer",
               marginBottom: "8px",
             }}
           >
-            {isSignUp ? "新規登録" : "ログイン"}
+            {loading ? "処理中..." : isSignUp ? "新規登録" : "ログイン"}
           </button>
           <button
             onClick={() => {
@@ -294,6 +326,23 @@ const MyPage = ({ onBack, memos = [] }) => {
             </div>
           </div>
         </div>
+
+        {/* ログアウトボタン */}
+        <button
+          onClick={handleSignOut}
+          style={{
+            marginTop: "16px",
+            width: "100%",
+            padding: "6px",
+            fontSize: "12px",
+            cursor: "pointer",
+            backgroundColor: "#fff",
+            border: "1px solid #ddd",
+            color: "#666",
+          }}
+        >
+          ログアウト
+        </button>
       </div>
 
       {/* 書いたメモ一覧 */}
