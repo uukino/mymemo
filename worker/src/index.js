@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
@@ -46,23 +46,16 @@ export default {
       if (path === "/auth/signup" && request.method === "POST") {
         const { email, password, display_name } = await request.json();
         if (!email || !password) {
-          return json(
-            { error: "email と password は必須です" },
-            400,
-          );
+          return json({ error: "email と password は必須です" }, 400);
         }
-        const { data, error } = await supabaseAuth.auth.signUp({
+        // admin API で作成することでメール確認を不要にする
+        const { data, error } = await supabase.auth.admin.createUser({
           email,
           password,
-          options: { data: { display_name: display_name || email } },
+          email_confirm: true,
+          user_metadata: { display_name: display_name || email },
         });
         if (error) return json({ error: error.message }, 400);
-        if (!data.user) {
-          return json(
-            { error: "確認メールを送信しました。メールを確認してください" },
-            202,
-          );
-        }
         return json({
           id: data.user.id,
           email: data.user.email,
@@ -101,9 +94,12 @@ export default {
       if (path === "/memos" && request.method === "GET") {
         const memoUrl = url.searchParams.get("url");
         const q = url.searchParams.get("q");
+        const userId = url.searchParams.get("user_id");
 
         let query = supabase.from("memos").select("*");
-        if (q?.trim()) {
+        if (userId?.trim()) {
+          query = query.eq("user_id", userId.trim());
+        } else if (q?.trim()) {
           query = query.ilike("text", `%${q.trim()}%`);
         } else if (memoUrl?.trim()) {
           query = query.eq("url", memoUrl.trim());
@@ -126,6 +122,23 @@ export default {
           .select();
         if (error) return json({ error: error.message }, 500);
         return json(data[0]);
+      }
+
+      // DELETE /memos/:id
+      const memoIdMatch = path.match(/^\/memos\/([^/]+)$/);
+      if (memoIdMatch && request.method === "DELETE") {
+        const id = memoIdMatch[1];
+        const { user_id } = await request.json();
+        const { data: memo, error: fetchError } = await supabase
+          .from("memos")
+          .select("user_id")
+          .eq("id", id)
+          .single();
+        if (fetchError || !memo) return json({ error: "Memo not found" }, 404);
+        if (memo.user_id !== user_id) return json({ error: "Unauthorized" }, 403);
+        const { error } = await supabase.from("memos").delete().eq("id", id);
+        if (error) return json({ error: error.message }, 500);
+        return json({ success: true });
       }
 
       // POST /memos/:id/like

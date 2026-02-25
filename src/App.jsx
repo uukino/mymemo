@@ -12,7 +12,6 @@ import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import MemoInput from "./MemoInput";
 import MemoList from "./MemoList";
 import MyPage from "./MyPage";
-import RemoteSearch from "./RemoteSearch";
 import SearchMemo from "./SearchMemo";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
@@ -33,6 +32,7 @@ function App() {
   const [inputTags, setInputTags] = useState([]);
   const [userId, setUserId] = useState("");
   const [userName, setUserName] = useState("");
+  const [remoteSortOrder, setRemoteSortOrder] = useState("desc");
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -286,7 +286,12 @@ function App() {
   };
 
   const currentPageMemos = memos.filter((memo) => memo.url === currentUrl);
-  const currentList = viewMode === "remote" ? remoteMemos : currentPageMemos;
+
+  const remoteSorted = [...remoteMemos].sort((a, b) => {
+    if (remoteSortOrder === "likes") return (b.good || 0) - (a.good || 0);
+    return new Date(b.created_at) - new Date(a.created_at);
+  });
+  const currentList = viewMode === "remote" ? remoteSorted : currentPageMemos;
 
   const formatTimestamp = (memo) =>
     memo.updated_at ||
@@ -382,7 +387,7 @@ function App() {
       )}
 
       {viewMode === "mypage" ? (
-        <MyPage onBack={() => setViewMode("local")} memos={memos} />
+        <MyPage onBack={() => setViewMode("local")} />
       ) : viewMode === "search" ? (
         <SearchMemo
           memos={memos}
@@ -421,7 +426,6 @@ function App() {
               >
                 {remoteLoading ? "読み込み中..." : "リモート更新"}
               </button>
-              <RemoteSearch apiBase={API_BASE} onResults={setRemoteMemos} />
               {remoteError && (
                 <p style={{ color: "#c00", fontSize: "12px" }}>{remoteError}</p>
               )}
@@ -435,15 +439,26 @@ function App() {
               marginBottom: "8px",
             }}
           >
-            <select
-              value={sortOrder}
-              onChange={handleSortChange}
-              style={{ padding: "4px", fontSize: "12px" }}
-            >
-              <option value="desc">▼ 新しい順</option>
-              <option value="asc">▲ 古い順</option>
-              <option value="manual">≡ 手動(ドラッグ)</option>
-            </select>
+            {viewMode === "remote" ? (
+              <select
+                value={remoteSortOrder}
+                onChange={(e) => setRemoteSortOrder(e.target.value)}
+                style={{ padding: "4px", fontSize: "12px" }}
+              >
+                <option value="desc">▼ 新しい順</option>
+                <option value="likes">♥ いいね順</option>
+              </select>
+            ) : (
+              <select
+                value={sortOrder}
+                onChange={handleSortChange}
+                style={{ padding: "4px", fontSize: "12px" }}
+              >
+                <option value="desc">▼ 新しい順</option>
+                <option value="asc">▲ 古い順</option>
+                <option value="manual">≡ 手動(ドラッグ)</option>
+              </select>
+            )}
           </div>
 
           <DndContext

@@ -2,26 +2,69 @@ import React, { useState, useEffect } from "react";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8787";
 
-const MyPage = ({ onBack, memos = [] }) => {
+const MyPage = ({ onBack }) => {
   const [name, setName] = useState("ゲストユーザー");
   const [authStatus, setAuthStatus] = useState("unauth");
+  const [userId, setUserId] = useState("");
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const [authError, setAuthError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [userMemos, setUserMemos] = useState([]);
+  const [memosLoading, setMemosLoading] = useState(false);
 
   useEffect(() => {
     if (typeof chrome !== "undefined" && chrome.storage) {
       chrome.storage.local.get(["userId", "userName"], (result) => {
         if (result.userId) {
           setAuthStatus("auth");
+          setUserId(result.userId);
           setName(result.userName || "ゲストユーザー");
         }
       });
     }
   }, []);
+
+  useEffect(() => {
+    if (userId) fetchUserMemos();
+  }, [userId]);
+
+  const fetchUserMemos = async () => {
+    setMemosLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/memos?user_id=${userId}`);
+      const data = await res.json();
+      setUserMemos(Array.isArray(data) ? data : []);
+    } catch {
+      setUserMemos([]);
+    } finally {
+      setMemosLoading(false);
+    }
+  };
+
+  const handleDeleteMemo = async (memoId) => {
+    if (!window.confirm("このメモを削除しますか？")) return;
+    try {
+      const res = await fetch(`${API_BASE}/memos/${memoId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId }),
+      });
+      if (res.ok) {
+        setUserMemos((prev) => prev.filter((m) => m.id !== memoId));
+      }
+    } catch {
+      // 削除失敗時は何もしない
+    }
+  };
+
+  const handleOpenUrl = (url) => {
+    if (typeof chrome !== "undefined" && chrome.tabs) {
+      chrome.tabs.create({ url });
+    }
+  };
 
   const handleSignIn = async () => {
     setAuthError("");
@@ -43,6 +86,7 @@ const MyPage = ({ onBack, memos = [] }) => {
       }
       const userName = data.display_name || data.email;
       setAuthStatus("auth");
+      setUserId(data.id);
       setName(userName);
       setEmail("");
       setPassword("");
@@ -68,16 +112,13 @@ const MyPage = ({ onBack, memos = [] }) => {
         body: JSON.stringify({ email, password, display_name: displayName }),
       });
       const data = await res.json();
-      if (res.status === 202) {
-        setAuthError("確認メールを送信しました。メールを確認してください");
-        return;
-      }
       if (!res.ok || !data.id) {
         setAuthError(data.error || "登録に失敗しました");
         return;
       }
       const userName = data.display_name || data.email;
       setAuthStatus("auth");
+      setUserId(data.id);
       setName(userName);
       setEmail("");
       setPassword("");
@@ -98,7 +139,9 @@ const MyPage = ({ onBack, memos = [] }) => {
     }
     chrome.storage.local.remove(["userId", "userName"]);
     setAuthStatus("unauth");
+    setUserId("");
     setName("ゲストユーザー");
+    setUserMemos([]);
   };
 
   const handleNameChange = (e) => {
@@ -109,9 +152,8 @@ const MyPage = ({ onBack, memos = [] }) => {
     }
   };
 
-  const memoCount = memos.length;
-  const totalLikes = memos.reduce((sum, memo) => sum + (memo.good || 0), 0);
-  const sortedMemos = [...memos].sort((a, b) => b.id - a.id);
+  const memoCount = userMemos.length;
+  const totalLikes = userMemos.reduce((sum, memo) => sum + (memo.good || 0), 0);
 
   if (authStatus !== "auth") {
     return (
@@ -306,7 +348,7 @@ const MyPage = ({ onBack, memos = [] }) => {
         {/* 統計情報 */}
         <div style={{ display: "flex", justifyContent: "space-around" }}>
           <div>
-            <div style={{ fontSize: "12px", color: "#666" }}>書いたメモ</div>
+            <div style={{ fontSize: "12px", color: "#666" }}>投稿したメモ</div>
             <div
               style={{ fontWeight: "bold", fontSize: "18px", color: "#000" }}
             >
@@ -344,12 +386,35 @@ const MyPage = ({ onBack, memos = [] }) => {
         </button>
       </div>
 
-      {/* 書いたメモ一覧 */}
-      <h4 style={{ margin: "0 0 8px 0", fontSize: "14px" }}>
-        最近のメモ ({memoCount})
-      </h4>
+      {/* 投稿したメモ一覧 */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: "8px",
+        }}
+      >
+        <h4 style={{ margin: 0, fontSize: "14px" }}>
+          投稿したメモ ({memoCount})
+        </h4>
+        <button
+          onClick={fetchUserMemos}
+          disabled={memosLoading}
+          style={{ fontSize: "11px", padding: "2px 8px", cursor: "pointer" }}
+        >
+          {memosLoading ? "読込中..." : "更新"}
+        </button>
+      </div>
+
+      {memosLoading && (
+        <p style={{ textAlign: "center", color: "#888", fontSize: "12px" }}>
+          読み込み中...
+        </p>
+      )}
+
       <ul style={{ listStyle: "none", padding: 0 }}>
-        {sortedMemos.map((memo) => (
+        {userMemos.map((memo) => (
           <li
             key={memo.id}
             style={{
@@ -357,41 +422,78 @@ const MyPage = ({ onBack, memos = [] }) => {
               borderRadius: "4px",
               padding: "8px",
               marginBottom: "8px",
-              backgroundColor: memo.memoColor || "#f9f9f9",
+              backgroundColor: "#f9f9f9",
             }}
           >
+            {/* メモ本文 */}
             <div
               style={{
                 fontSize: "13px",
-                marginBottom: "4px",
+                marginBottom: "6px",
                 whiteSpace: "pre-wrap",
                 color: "#333",
               }}
             >
               {memo.text}
             </div>
+
+            {/* URL（クリックで新タブ） */}
+            <button
+              onClick={() => handleOpenUrl(memo.url)}
+              style={{
+                display: "block",
+                width: "100%",
+                textAlign: "left",
+                fontSize: "10px",
+                color: "#2196F3",
+                background: "none",
+                border: "none",
+                padding: "2px 0",
+                cursor: "pointer",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                marginBottom: "4px",
+              }}
+              title={memo.url}
+            >
+              🔗 {memo.url}
+            </button>
+
+            {/* 日時・いいね・削除 */}
             <div
               style={{
-                fontSize: "10px",
-                color: "#666",
-                wordBreak: "break-all",
                 display: "flex",
-                flexDirection: "column",
-                gap: "2px",
+                justifyContent: "space-between",
+                alignItems: "center",
               }}
             >
-              <div>🔗 {memo.url}</div>
-              <div>
-                <span>🕒 {memo.createdAt}</span>
+              <div style={{ fontSize: "10px", color: "#999" }}>
+                <span>🕒 {new Date(memo.created_at).toLocaleString()}</span>
+                <span style={{ marginLeft: "8px" }}>♥ {memo.good || 0}</span>
               </div>
+              <button
+                onClick={() => handleDeleteMemo(memo.id)}
+                style={{
+                  fontSize: "10px",
+                  padding: "2px 6px",
+                  cursor: "pointer",
+                  backgroundColor: "#fff",
+                  border: "1px solid #ffcdd2",
+                  borderRadius: "3px",
+                  color: "#e53935",
+                }}
+              >
+                削除
+              </button>
             </div>
           </li>
         ))}
       </ul>
 
-      {memoCount === 0 && (
+      {!memosLoading && memoCount === 0 && (
         <p style={{ textAlign: "center", color: "#888", fontSize: "12px" }}>
-          まだメモがありません
+          まだ投稿したメモがありません
         </p>
       )}
     </div>
