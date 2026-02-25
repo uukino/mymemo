@@ -387,7 +387,11 @@ function App() {
       )}
 
       {viewMode === "mypage" ? (
-        <MyPage onBack={() => setViewMode("local")} />
+        <MyPage
+          onBack={() => setViewMode("local")}
+          localMemos={memos}
+          deleteMemo={deleteMemo}
+        />
       ) : viewMode === "search" ? (
         <SearchMemo
           memos={memos}

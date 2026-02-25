@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8787";
 
-const MyPage = ({ onBack }) => {
+const MyPage = ({ onBack, localMemos = [], deleteMemo }) => {
   const [name, setName] = useState("ゲストユーザー");
   const [authStatus, setAuthStatus] = useState("unauth");
   const [userId, setUserId] = useState("");
@@ -14,6 +14,7 @@ const MyPage = ({ onBack }) => {
   const [loading, setLoading] = useState(false);
   const [userMemos, setUserMemos] = useState([]);
   const [memosLoading, setMemosLoading] = useState(false);
+  const [memoTab, setMemoTab] = useState("online");
 
   useEffect(() => {
     if (typeof chrome !== "undefined" && chrome.storage) {
@@ -386,115 +387,167 @@ const MyPage = ({ onBack }) => {
         </button>
       </div>
 
-      {/* 投稿したメモ一覧 */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: "8px",
-        }}
-      >
-        <h4 style={{ margin: 0, fontSize: "14px" }}>
-          投稿したメモ ({memoCount})
-        </h4>
+      {/* タブ切り替え */}
+      <div style={{ display: "flex", gap: "4px", marginBottom: "12px" }}>
         <button
-          onClick={fetchUserMemos}
-          disabled={memosLoading}
-          style={{ fontSize: "11px", padding: "2px 8px", cursor: "pointer" }}
+          onClick={() => setMemoTab("online")}
+          style={{
+            flex: 1,
+            padding: "6px",
+            fontSize: "12px",
+            cursor: "pointer",
+            background: memoTab === "online" ? "#ddd" : "#fff",
+            border: "1px solid #ddd",
+            borderRadius: "4px",
+            color: memoTab === "online" ? "#333" : "#666",
+          }}
         >
-          {memosLoading ? "読込中..." : "更新"}
+          オンライン ({memoCount})
+        </button>
+        <button
+          onClick={() => setMemoTab("local")}
+          style={{
+            flex: 1,
+            padding: "6px",
+            fontSize: "12px",
+            cursor: "pointer",
+            background: memoTab === "local" ? "#ddd" : "#fff",
+            border: "1px solid #ddd",
+            borderRadius: "4px",
+            color: memoTab === "local" ? "#333" : "#666",
+          }}
+        >
+          ローカル ({localMemos.length})
         </button>
       </div>
 
-      {memosLoading && (
-        <p style={{ textAlign: "center", color: "#888", fontSize: "12px" }}>
-          読み込み中...
-        </p>
-      )}
-
-      <ul style={{ listStyle: "none", padding: 0 }}>
-        {userMemos.map((memo) => (
-          <li
-            key={memo.id}
-            style={{
-              border: "1px solid #eee",
-              borderRadius: "4px",
-              padding: "8px",
-              marginBottom: "8px",
-              backgroundColor: "#f9f9f9",
-            }}
-          >
-            {/* メモ本文 */}
-            <div
-              style={{
-                fontSize: "13px",
-                marginBottom: "6px",
-                whiteSpace: "pre-wrap",
-                color: "#333",
-              }}
-            >
-              {memo.text}
-            </div>
-
-            {/* URL（クリックで新タブ） */}
+      {/* ── オンラインメモ一覧 ── */}
+      {memoTab === "online" && (
+        <>
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "8px" }}>
             <button
-              onClick={() => handleOpenUrl(memo.url)}
-              style={{
-                display: "block",
-                width: "100%",
-                textAlign: "left",
-                fontSize: "10px",
-                color: "#2196F3",
-                background: "none",
-                border: "none",
-                padding: "2px 0",
-                cursor: "pointer",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                marginBottom: "4px",
-              }}
-              title={memo.url}
+              onClick={fetchUserMemos}
+              disabled={memosLoading}
+              style={{ fontSize: "11px", padding: "2px 8px", cursor: "pointer" }}
             >
-              🔗 {memo.url}
+              {memosLoading ? "読込中..." : "更新"}
             </button>
-
-            {/* 日時・いいね・削除 */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <div style={{ fontSize: "10px", color: "#999" }}>
-                <span>🕒 {new Date(memo.created_at).toLocaleString()}</span>
-                <span style={{ marginLeft: "8px" }}>♥ {memo.good || 0}</span>
-              </div>
-              <button
-                onClick={() => handleDeleteMemo(memo.id)}
+          </div>
+          {memosLoading && (
+            <p style={{ textAlign: "center", color: "#888", fontSize: "12px" }}>
+              読み込み中...
+            </p>
+          )}
+          <ul style={{ listStyle: "none", padding: 0 }}>
+            {userMemos.map((memo) => (
+              <li
+                key={memo.id}
                 style={{
-                  fontSize: "10px",
-                  padding: "2px 6px",
-                  cursor: "pointer",
-                  backgroundColor: "#fff",
-                  border: "1px solid #ffcdd2",
-                  borderRadius: "3px",
-                  color: "#e53935",
+                  border: "1px solid #eee",
+                  borderRadius: "4px",
+                  padding: "8px",
+                  marginBottom: "8px",
+                  backgroundColor: "#f9f9f9",
                 }}
               >
-                削除
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
+                <div style={{ fontSize: "13px", marginBottom: "6px", whiteSpace: "pre-wrap", color: "#333" }}>
+                  {memo.text}
+                </div>
+                <button
+                  onClick={() => handleOpenUrl(memo.url)}
+                  style={{
+                    display: "block", width: "100%", textAlign: "left",
+                    fontSize: "10px", color: "#2196F3", background: "none",
+                    border: "none", padding: "2px 0", cursor: "pointer",
+                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                    marginBottom: "4px",
+                  }}
+                  title={memo.url}
+                >
+                  🔗 {memo.url}
+                </button>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ fontSize: "10px", color: "#999" }}>
+                    <span>🕒 {new Date(memo.created_at).toLocaleString()}</span>
+                    <span style={{ marginLeft: "8px" }}>♥ {memo.good || 0}</span>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteMemo(memo.id)}
+                    style={{
+                      fontSize: "10px", padding: "2px 6px", cursor: "pointer",
+                      backgroundColor: "#fff", border: "1px solid #ffcdd2",
+                      borderRadius: "3px", color: "#e53935",
+                    }}
+                  >
+                    削除
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+          {!memosLoading && memoCount === 0 && (
+            <p style={{ textAlign: "center", color: "#888", fontSize: "12px" }}>
+              まだ投稿したメモがありません
+            </p>
+          )}
+        </>
+      )}
 
-      {!memosLoading && memoCount === 0 && (
-        <p style={{ textAlign: "center", color: "#888", fontSize: "12px" }}>
-          まだ投稿したメモがありません
-        </p>
+      {/* ── ローカルメモ一覧 ── */}
+      {memoTab === "local" && (
+        <>
+          <ul style={{ listStyle: "none", padding: 0 }}>
+            {localMemos.map((memo) => (
+              <li
+                key={memo.id}
+                style={{
+                  border: "1px solid #eee",
+                  borderRadius: "4px",
+                  padding: "8px",
+                  marginBottom: "8px",
+                  backgroundColor: memo.memoColor || "#f9f9f9",
+                }}
+              >
+                <div style={{ fontSize: "13px", marginBottom: "6px", whiteSpace: "pre-wrap", color: "#333" }}>
+                  {memo.text}
+                </div>
+                <button
+                  onClick={() => handleOpenUrl(memo.url)}
+                  style={{
+                    display: "block", width: "100%", textAlign: "left",
+                    fontSize: "10px", color: "#2196F3", background: "none",
+                    border: "none", padding: "2px 0", cursor: "pointer",
+                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                    marginBottom: "4px",
+                  }}
+                  title={memo.url}
+                >
+                  🔗 {memo.url}
+                </button>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ fontSize: "10px", color: "#999" }}>
+                    🕒 {memo.updatedAt || memo.createdAt || ""}
+                  </div>
+                  <button
+                    onClick={() => deleteMemo(memo.id)}
+                    style={{
+                      fontSize: "10px", padding: "2px 6px", cursor: "pointer",
+                      backgroundColor: "#fff", border: "1px solid #ffcdd2",
+                      borderRadius: "3px", color: "#e53935",
+                    }}
+                  >
+                    削除
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+          {localMemos.length === 0 && (
+            <p style={{ textAlign: "center", color: "#888", fontSize: "12px" }}>
+              ローカルにメモがありません
+            </p>
+          )}
+        </>
       )}
     </div>
   );
