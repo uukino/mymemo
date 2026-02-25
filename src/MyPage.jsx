@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8787";
 
-const MyPage = ({ onBack, localMemos = [], deleteMemo }) => {
+const MyPage = ({ onBack, localMemos = [], deleteMemo, pasteRemoteMemo }) => {
   const [name, setName] = useState("ゲストユーザー");
   const [authStatus, setAuthStatus] = useState("unauth");
   const [userId, setUserId] = useState("");
@@ -471,16 +471,28 @@ const MyPage = ({ onBack, localMemos = [], deleteMemo }) => {
                     <span>🕒 {new Date(memo.created_at).toLocaleString()}</span>
                     <span style={{ marginLeft: "8px" }}>♥ {memo.good || 0}</span>
                   </div>
-                  <button
-                    onClick={() => handleDeleteMemo(memo.id)}
-                    style={{
-                      fontSize: "10px", padding: "2px 6px", cursor: "pointer",
-                      backgroundColor: "#fff", border: "1px solid #ffcdd2",
-                      borderRadius: "3px", color: "#e53935",
-                    }}
-                  >
-                    削除
-                  </button>
+                  <div style={{ display: "flex", gap: "4px" }}>
+                    <button
+                      onClick={() => pasteRemoteMemo(memo)}
+                      style={{
+                        fontSize: "10px", padding: "2px 6px", cursor: "pointer",
+                        backgroundColor: "#e8f5e9", border: "1px solid #a5d6a7",
+                        borderRadius: "3px", color: "#2e7d32",
+                      }}
+                    >
+                      貼付
+                    </button>
+                    <button
+                      onClick={() => handleDeleteMemo(memo.id)}
+                      style={{
+                        fontSize: "10px", padding: "2px 6px", cursor: "pointer",
+                        backgroundColor: "#fff", border: "1px solid #ffcdd2",
+                        borderRadius: "3px", color: "#e53935",
+                      }}
+                    >
+                      削除
+                    </button>
+                  </div>
                 </div>
               </li>
             ))}

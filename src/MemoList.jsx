@@ -13,6 +13,7 @@ function SortableItem({
   formatTimestamp,
   handleEdit,
   pasteMemo,
+  pasteRemoteMemo,
   changeColor,
   deleteMemo,
   filterMemo,
@@ -122,6 +123,19 @@ function SortableItem({
 
           {viewMode === "remote" ? (
             <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+              <button
+                onClick={() => pasteRemoteMemo(memo)}
+                style={{
+                  fontSize: "12px",
+                  padding: "2px 8px",
+                  backgroundColor: "#e8f5e9",
+                  border: "1px solid #a5d6a7",
+                  cursor: "pointer",
+                  borderRadius: "4px",
+                }}
+              >
+                貼付
+              </button>
               {/* ★追加: いいねボタン */}
               <button
                 onClick={() => handleLike(memo.id)}
@@ -207,10 +221,11 @@ function MemoList({
   formatTimestamp,
   handleEdit,
   pasteMemo,
+  pasteRemoteMemo,
   changeColor,
   deleteMemo,
   handleLike,
-  filterMemo, // ★追加
+  filterMemo,
   userId,
 }) {
   return (
@@ -231,6 +246,7 @@ function MemoList({
               formatTimestamp={formatTimestamp}
               handleEdit={handleEdit}
               pasteMemo={pasteMemo}
+              pasteRemoteMemo={pasteRemoteMemo}
               changeColor={changeColor}
               deleteMemo={deleteMemo}
               filterMemo={filterMemo}

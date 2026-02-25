@@ -263,6 +263,25 @@ function App() {
     updateMemos(memos.map((m) => (m.id === memo.id ? updated : m)));
   };
 
+  const pasteRemoteMemo = (remoteMemo) => {
+    const now = new Date().toLocaleString();
+    const newMemo = {
+      id: Date.now(),
+      url: remoteMemo.url,
+      text: remoteMemo.text,
+      tags: [],
+      createdAt: now,
+      updatedAt: now,
+      liked: false,
+      hidden: false,
+      good: 0,
+      pasted: true,
+      memoColor: "#fff8b0",
+      isCanvas: false,
+    };
+    updateMemos([newMemo, ...memos]);
+  };
+
   const deleteMemo = (id) => {
     if (!window.confirm("削除しますか？")) return;
     updateMemos(memos.filter((m) => m.id !== id));
@@ -391,6 +410,7 @@ function App() {
           onBack={() => setViewMode("local")}
           localMemos={memos}
           deleteMemo={deleteMemo}
+          pasteRemoteMemo={pasteRemoteMemo}
         />
       ) : viewMode === "search" ? (
         <SearchMemo
@@ -476,6 +496,7 @@ function App() {
               formatTimestamp={formatTimestamp}
               handleEdit={handleEdit}
               pasteMemo={pasteMemo}
+              pasteRemoteMemo={pasteRemoteMemo}
               changeColor={changeColor}
               deleteMemo={deleteMemo}
               handleLike={handleLike}
