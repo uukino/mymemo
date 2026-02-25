@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { supabase } from "./supabaseClient";
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8787";
 
 const MyPage = ({ onBack, memos = [] }) => {
   const [name, setName] = useState("ゲストユーザー");
   const [authStatus, setAuthStatus] = useState("unauth");
-  const [userId, setUserId] = useState("");
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
@@ -17,7 +17,6 @@ const MyPage = ({ onBack, memos = [] }) => {
       chrome.storage.local.get(["userId", "userName"], (result) => {
         if (result.userId) {
           setAuthStatus("auth");
-          setUserId(result.userId);
           setName(result.userName || "ゲストユーザー");
         }
       });
@@ -32,22 +31,22 @@ const MyPage = ({ onBack, memos = [] }) => {
     }
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const res = await fetch(`${API_BASE}/auth/signin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
-      if (error) {
+      const data = await res.json();
+      if (!res.ok || !data.id) {
         setAuthError("メールアドレスまたはパスワードが正しくありません");
         return;
       }
-      const user = data.user;
-      const userName = user.user_metadata?.display_name || user.email;
+      const userName = data.display_name || data.email;
       setAuthStatus("auth");
-      setUserId(user.id);
       setName(userName);
       setEmail("");
       setPassword("");
-      chrome.storage.local.set({ userId: user.id, userName });
+      chrome.storage.local.set({ userId: data.id, userName });
     } catch {
       setAuthError("ログインに失敗しました");
     } finally {
@@ -63,30 +62,27 @@ const MyPage = ({ onBack, memos = [] }) => {
     }
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { display_name: displayName || email },
-        },
+      const res = await fetch(`${API_BASE}/auth/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, display_name: displayName }),
       });
-      if (error) {
-        setAuthError(error.message || "登録に失敗しました");
-        return;
-      }
-      const user = data.user;
-      if (!user) {
+      const data = await res.json();
+      if (res.status === 202) {
         setAuthError("確認メールを送信しました。メールを確認してください");
         return;
       }
-      const userName = displayName || user.email;
+      if (!res.ok || !data.id) {
+        setAuthError(data.error || "登録に失敗しました");
+        return;
+      }
+      const userName = data.display_name || data.email;
       setAuthStatus("auth");
-      setUserId(user.id);
       setName(userName);
       setEmail("");
       setPassword("");
       setDisplayName("");
-      chrome.storage.local.set({ userId: user.id, userName });
+      chrome.storage.local.set({ userId: data.id, userName });
     } catch {
       setAuthError("登録に失敗しました");
     } finally {
@@ -95,10 +91,13 @@ const MyPage = ({ onBack, memos = [] }) => {
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await fetch(`${API_BASE}/auth/signout`, { method: "POST" });
+    } catch {
+      // ネットワークエラーでもローカルのサインアウトは実行する
+    }
     chrome.storage.local.remove(["userId", "userName"]);
     setAuthStatus("unauth");
-    setUserId("");
     setName("ゲストユーザー");
   };
 

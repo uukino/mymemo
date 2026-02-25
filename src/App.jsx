@@ -14,7 +14,6 @@ import MemoList from "./MemoList";
 import MyPage from "./MyPage";
 import RemoteSearch from "./RemoteSearch";
 import SearchMemo from "./SearchMemo";
-import { supabase } from "./supabaseClient";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
 const PUBLIC_USER_ID = import.meta.env.VITE_PUBLIC_USER_ID || "";
@@ -55,22 +54,12 @@ function App() {
     loadUserInfo();
   }, []);
 
-  const loadUserInfo = async () => {
+  const loadUserInfo = () => {
     if (typeof chrome !== "undefined" && chrome.storage) {
-      chrome.storage.local.get(["userId", "userName"], async (result) => {
+      chrome.storage.local.get(["userId", "userName"], (result) => {
         if (result.userId) {
           setUserId(result.userId);
           setUserName(result.userName || "");
-        } else {
-          // Chrome storageにない場合はSupabaseセッションを確認
-          const { data } = await supabase.auth.getSession();
-          if (data.session?.user) {
-            const user = data.session.user;
-            const userName = user.user_metadata?.display_name || user.email || "";
-            setUserId(user.id);
-            setUserName(userName);
-            chrome.storage.local.set({ userId: user.id, userName });
-          }
         }
       });
     }
